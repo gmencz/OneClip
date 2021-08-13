@@ -1,6 +1,7 @@
 node_modules
 
-/.cache
-/server/build
-/public/build
-/server-build
+.cache
+server/build
+public/build
+server-build
+app/styles
