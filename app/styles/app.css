@@ -616,6 +616,18 @@ video {
   --tw-filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .fixed {
   position: fixed;
 }
@@ -639,6 +651,26 @@ video {
   top: 88%;
 }
 
+.top-8 {
+  top: 2rem;
+}
+
+.right-8 {
+  right: 2rem;
+}
+
+.top-4 {
+  top: 1rem;
+}
+
+.top-5 {
+  top: 1.25rem;
+}
+
+.right-6 {
+  right: 1.5rem;
+}
+
 .z-10 {
   z-index: 10;
 }
@@ -646,6 +678,11 @@ video {
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
+}
+
+.my-32 {
+  margin-top: 8rem;
+  margin-bottom: 8rem;
 }
 
 .mt-auto {
@@ -678,6 +715,10 @@ video {
 
 .mt-1 {
   margin-top: 0.25rem;
+}
+
+.ml-auto {
+  margin-left: auto;
 }
 
 .inline-block {
@@ -720,6 +761,18 @@ video {
   height: 100%;
 }
 
+.h-5 {
+  height: 1.25rem;
+}
+
+.h-8 {
+  height: 2rem;
+}
+
+.h-7 {
+  height: 1.75rem;
+}
+
 .min-h-screen {
   min-height: 100vh;
 }
@@ -742,6 +795,18 @@ video {
 
 .w-\[5\.35rem\] {
   width: 5.35rem;
+}
+
+.w-5 {
+  width: 1.25rem;
+}
+
+.w-8 {
+  width: 2rem;
+}
+
+.w-7 {
+  width: 1.75rem;
 }
 
 .translate-y-4 {
@@ -816,6 +881,30 @@ video {
 
 .gap-14 {
   gap: 3.5rem;
+}
+
+.space-x-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+  margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+.space-x-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1.5rem * var(--tw-space-x-reverse));
+  margin-left: calc(1.5rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+.space-x-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+.space-x-5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1.25rem * var(--tw-space-x-reverse));
+  margin-left: calc(1.25rem * calc(1 - var(--tw-space-x-reverse)));
 }
 
 .overflow-hidden {
@@ -1077,6 +1166,11 @@ body {
 
 .hover\:bg-opacity-80:hover {
   --tw-bg-opacity: 0.8;
+}
+
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgba(255, 255, 255, var(--tw-text-opacity));
 }
 
 .focus\:outline-none:focus {
