@@ -10,7 +10,6 @@ import toast from "react-hot-toast";
 import { useState, useEffect, useMemo } from "react";
 import { Device, useDevice } from "../utils/device";
 import { rest } from "../utils/pusher.server";
-import { useClipboard } from "../utils/clipboard";
 import { commitSession, getSession } from "../utils/sessions";
 import { ActivityInfoModal } from "../components/activity-info-modal";
 import { MainScreen } from "../components/main-screen";
@@ -108,12 +107,11 @@ type RouteData = {
 export default function Index() {
   let { ip, error, lastDeviceName } = useRouteData<RouteData>();
   let [devices, setDevices] = useState<Device[]>([]);
-  let { copy, text, status: clipboardStatus } = useClipboard();
   let [showInfoModal, setShowInfoModal] = useState(false);
   let pendingSubmit = usePendingFormSubmit();
   let myDevice = useDevice({
     ip,
-    shouldConnect: !!ip && clipboardStatus === "success"
+    shouldConnect: !!ip
   });
 
   let devicesHalves = useMemo(() => {
@@ -138,7 +136,7 @@ export default function Index() {
       console.error(error);
       toast.error(<span className="text-sm">Failed to share clipboard</span>, {
         style: {
-          paddingLeft: "12px",
+          paddingLeft: "15px",
           paddingRight: 0
         }
       });
@@ -150,7 +148,7 @@ export default function Index() {
       {
         duration: 3200,
         style: {
-          paddingLeft: "12px",
+          paddingLeft: "15px",
           paddingRight: 0
         }
       }
@@ -174,15 +172,15 @@ export default function Index() {
       "copy-to-clipboard",
       async ({ from, text }: ClipboardData) => {
         try {
-          await copy(text);
+          await navigator.clipboard.writeText(text);
           toast.success(
             <span className="text-sm">
-              Check your clipboard, {from} just pasted something in it!
+              Check your clipboard, {from} shared their clipboard with you!
             </span>,
             {
-              duration: 3200,
+              duration: Infinity,
               style: {
-                paddingLeft: "12px",
+                paddingLeft: "15px",
                 paddingRight: 0
               }
             }
@@ -256,29 +254,13 @@ export default function Index() {
         );
       }
     );
-  }, [
-    copy,
-    myDevice?.info?.name,
-    myDevice.networkChannel,
-    myDevice.selfChannel
-  ]);
+  }, [myDevice?.info?.name, myDevice.networkChannel, myDevice.selfChannel]);
 
   if (!ip) {
     return (
       <ErrorScreen>
         <p className="text-red-500 text-xl mt-auto">
           Failed to connect, reason: failed to retrieve public IP address
-        </p>
-      </ErrorScreen>
-    );
-  }
-
-  if (clipboardStatus === "error") {
-    return (
-      <ErrorScreen>
-        <p className="text-red-500 text-xl mt-auto">
-          There was an error with your clipboard, make sure you have allowed
-          OneClip to access it and refresh this page.
         </p>
       </ErrorScreen>
     );
@@ -297,13 +279,7 @@ export default function Index() {
   return (
     <>
       <ActivityInfoModal show={showInfoModal} onClose={dismissInfoModal} />
-
-      <MainScreen
-        ip={ip}
-        clipboardText={text}
-        devicesHalves={devicesHalves}
-        myDevice={myDevice}
-      />
+      <MainScreen ip={ip} devicesHalves={devicesHalves} myDevice={myDevice} />
     </>
   );
 }

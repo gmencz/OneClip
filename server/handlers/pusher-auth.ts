@@ -16,6 +16,8 @@ const handlePusherAuth = (req: Request, res: Response) => {
   }
 
   if (channel.startsWith("presence")) {
+    // TODO: Make sure IP "x.x.x.x" can only subscribe to presence
+    // channel "x.x.x.x"
     let device = JSON.parse(rawDevice);
     let auth;
     try {

@@ -4,7 +4,6 @@ import { MyDevice } from "./my-device";
 
 type Props = {
   myDevice: Device;
-  clipboardText: string;
   ip: string;
   devicesHalves: {
     first: Device[];
@@ -12,17 +11,11 @@ type Props = {
   };
 };
 
-export function DevicesList({
-  devicesHalves,
-  myDevice,
-  clipboardText,
-  ip
-}: Props) {
+export function DevicesList({ devicesHalves, myDevice, ip }: Props) {
   return (
     <div className="flex mt-auto gap-14 items-center justify-center flex-wrap mb-32">
       {devicesHalves.first.map(device => (
         <DiscoveredDevice
-          clipboardText={clipboardText}
           myDeviceName={myDevice.name}
           key={device.name}
           device={device}
@@ -34,7 +27,6 @@ export function DevicesList({
 
       {devicesHalves.second.map(device => (
         <DiscoveredDevice
-          clipboardText={clipboardText}
           myDeviceName={myDevice.name}
           key={device.name}
           device={device}

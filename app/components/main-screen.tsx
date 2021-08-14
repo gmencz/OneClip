@@ -5,7 +5,6 @@ import { InfoFooter } from "./info-footer";
 
 type Props = {
   myDevice: ReturnType<typeof useDevice>;
-  clipboardText: string;
   ip: string;
   devicesHalves: {
     first: Device[];
@@ -13,20 +12,14 @@ type Props = {
   };
 };
 
-export function MainScreen({
-  myDevice,
-  clipboardText,
-  devicesHalves,
-  ip
-}: Props) {
+export function MainScreen({ myDevice, devicesHalves, ip }: Props) {
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen p-12 bg-gray-900 relative">
+    <div className="flex flex-col justify-center items-center h-full p-12 bg-gray-900 relative">
       {myDevice.isConnecting ? (
         <Connecting />
       ) : myDevice.isConnected && !!myDevice.info ? (
         <>
           <DevicesList
-            clipboardText={clipboardText}
             devicesHalves={devicesHalves}
             ip={ip}
             myDevice={myDevice.info}
