@@ -1,6 +1,5 @@
 import {
   json,
-  MetaFunction,
   useRouteData,
   redirect,
   ActionFunction,
@@ -15,13 +14,6 @@ import { ActivityInfoModal } from "../components/activity-info-modal";
 import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
 import type { ClipboardData, Loader } from "../types";
-
-export let meta: MetaFunction = () => {
-  return {
-    title: "OneClip",
-    description: "Share your clipboard from any device, anywhere."
-  };
-};
 
 export let loader: Loader = async ({ context, request }) => {
   if (!context.ip) {

@@ -6,6 +6,7 @@ import styles from "./styles/app.css";
 import { Loader, Env } from "./types";
 import { getEnv } from "./utils/env";
 import { ErrorScreen } from "./components/error-screen";
+import { MetaFunction } from "@remix-run/react/routeModules";
 
 type RouteData = {
   env: Env;
@@ -27,6 +28,34 @@ declare global {
 
 export let links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: styles }];
+};
+
+export let meta: MetaFunction = () => {
+  return {
+    "theme-color": "#15E269",
+    "color-scheme": "dark light",
+    "og:title": "OneClip",
+    "og:type": "article",
+    "og:url": "https://oneclip.io/",
+    "og:author": "https://twitter.com/gmencz",
+    "og:image": "https://oneclip.io/android-chrome-192x192",
+    "og:description":
+      "Share your clipboard with people nearby. Open Source, No Setup, No Signup.",
+    "twitter:card": "summary_large_image",
+    "twitter:author": "@gmencz",
+    "twitter:site": "@gmencz",
+    "twitter:image": "https://oneclip.io/android-chrome-192x192",
+    "twitter:description":
+      "Share your clipboard with people nearby. Open Source, No Setup, No Signup.",
+    "X-UA-Compatible": "IE=edge,chrome=1",
+    author: "Gabriel Méndez",
+    language: "en",
+    robots: "index, follow",
+    description:
+      "Share your clipboard with people nearby. Open Source, No Setup, No Signup.",
+    title: "OneClip",
+    keywords: "Clipboard, Share"
+  };
 };
 
 export let loader: Loader = () => {
