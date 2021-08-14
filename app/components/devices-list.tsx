@@ -1,4 +1,5 @@
-import { Device, snakeCase } from "../utils/device";
+import { Device } from "../utils/device";
+import { snakeCase } from "../utils/words";
 import { DiscoveredDevice } from "./discovered-device";
 import { MyDevice } from "./my-device";
 

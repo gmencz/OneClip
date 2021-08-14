@@ -146,7 +146,6 @@ export default function Index() {
     toast.success(
       <span className="text-sm">Clipboard shared with {lastDeviceName}</span>,
       {
-        duration: 3200,
         style: {
           paddingLeft: "15px",
           paddingRight: 0
@@ -175,10 +174,9 @@ export default function Index() {
           await navigator.clipboard.writeText(text);
           toast.success(
             <span className="text-sm">
-              Check your clipboard, {from} shared their clipboard with you!
+              Check your clipboard, {from} just shared their clipboard with you!
             </span>,
             {
-              duration: Infinity,
               style: {
                 paddingLeft: "15px",
                 paddingRight: 0

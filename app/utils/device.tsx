@@ -15,6 +15,7 @@ import {
   isWearable
 } from "react-device-detect";
 import { useMemo } from "react";
+import { snakeCase } from "./words";
 
 type DeviceType =
   | "mobile"
@@ -70,14 +71,6 @@ function useDeviceInfo(): Device | undefined {
   }, []);
 
   return device;
-}
-
-export function snakeCase(str: string) {
-  return str
-    .replace(/\W+/g, " ")
-    .split(/ |\B(?=[A-Z])/)
-    .map(word => word.toLowerCase())
-    .join("-");
 }
 
 function useDeviceIcon(type: string) {
