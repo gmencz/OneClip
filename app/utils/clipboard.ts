@@ -1,32 +1,47 @@
 import { useCallback, useEffect, useState } from "react";
 
+type Clipboard = {
+  status: "loading" | "success" | "error";
+  text: string;
+};
+
 function useClipboard() {
-  let [error, setError] = useState<string | null>(null);
-  let [text, setText] = useState("");
+  let [clipboard, setClipboard] = useState<Clipboard>({
+    status: "loading",
+    text: ""
+  });
 
   useEffect(() => {
-    async function readClipboard() {
+    async function init() {
       try {
         const text = await navigator.clipboard.readText();
-        setText(text);
+        setClipboard({
+          status: "success",
+          text
+        });
       } catch (error) {
-        setError(error);
+        setClipboard({
+          status: "error",
+          text: ""
+        });
       }
     }
 
-    readClipboard();
+    init();
   }, []);
 
   let copy = useCallback(async (text: string) => {
     await navigator.clipboard.writeText(text);
-    setText(text);
+    setClipboard(c => ({
+      ...c,
+      text
+    }));
   }, []);
 
   return {
-    text,
-    error,
+    ...clipboard,
     copy
   };
 }
 
-export { useClipboard };
+export { Clipboard, useClipboard };

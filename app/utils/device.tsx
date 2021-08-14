@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { uniqueNamesGenerator, animals, colors } from "unique-names-generator";
+import {
+  uniqueNamesGenerator,
+  animals,
+  colors,
+  adjectives
+} from "unique-names-generator";
 import { useSubscription } from "./pusher-hooks";
 import {
   isConsole,
@@ -29,7 +34,7 @@ function generateDeviceName() {
   return uniqueNamesGenerator({
     length: 2,
     separator: " ",
-    dictionaries: [colors, animals],
+    dictionaries: [colors, animals, adjectives],
     style: "capital"
   });
 }
