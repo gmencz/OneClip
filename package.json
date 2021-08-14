@@ -5,7 +5,7 @@
     "build:remix": "remix build",
     "dev:remix": "remix dev",
     "build:server": "tsc",
-    "dev:server": "NODE_ENV=development ts-node --transpile-only server/index.ts",
+    "dev:server": "dotenv -e .env -- ts-node --transpile-only server/index.ts",
     "build:css": "tailwindcss -i ./styles/app.css -o ./app/styles/app.css --config ./tailwind.config.js --minify",
     "dev:css": "tailwindcss -i ./styles/app.css -o ./app/styles/app.css --config ./tailwind.config.js --watch"
   },
@@ -14,12 +14,19 @@
     "@remix-run/node": "^0.17.5",
     "@remix-run/react": "^0.17.5",
     "compression": "^1.7.4",
+    "dotenv-cli": "^4.0.0",
     "express": "^4.17.1",
     "morgan": "^1.10.0",
+    "pusher": "^5.0.0",
+    "pusher-js": "^7.0.3",
     "react": "^17.0.2",
+    "react-cookie": "^4.1.1",
+    "react-device-detect": "^1.17.0",
     "react-dom": "^17.0.2",
     "react-router-dom": "^6.0.0-beta.0",
-    "remix": "^0.17.5"
+    "remix": "^0.17.5",
+    "request-ip": "^2.1.3",
+    "unique-names-generator": "^4.6.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^0.17.5",
@@ -28,6 +35,7 @@
     "@types/morgan": "^1.9.3",
     "@types/react": "^17.0.17",
     "@types/react-dom": "^17.0.9",
+    "@types/request-ip": "^0.0.37",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
     "eslint": "^7.32.0",

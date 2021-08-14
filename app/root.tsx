@@ -1,13 +1,53 @@
-import type { LinksFunction } from "remix";
+import { LinksFunction, useRouteData } from "remix";
 import { Meta, Links, Scripts, LiveReload } from "remix";
 import { Outlet } from "react-router-dom";
 import styles from "./styles/app.css";
+import { Loader, Env } from "./types";
+import { getEnv } from "./utils/env";
+
+type RouteData = {
+  env: Env;
+};
+
+declare global {
+  let env: Env;
+
+  namespace NodeJS {
+    interface Global {
+      env: Env;
+    }
+  }
+
+  interface Window {
+    env: Env;
+  }
+}
 
 export let links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: styles }];
 };
 
+export let loader: Loader = () => {
+  let data = {
+    env: getEnv()
+  };
+
+  return data;
+};
+
+function EnvScript({ env }: { env: Env }) {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `window.env = ${JSON.stringify(env)}`
+      }}
+    />
+  );
+}
+
 function Document({ children }: { children: React.ReactNode }) {
+  let data = useRouteData<RouteData>();
+
   return (
     <html lang="en">
       <head>
@@ -38,6 +78,7 @@ function Document({ children }: { children: React.ReactNode }) {
         {children}
 
         <Scripts />
+        <EnvScript env={data.env} />
         {process.env.NODE_ENV === "development" && <LiveReload />}
       </body>
     </html>

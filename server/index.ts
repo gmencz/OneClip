@@ -3,6 +3,8 @@ import express from "express";
 import compression from "compression";
 import morgan from "morgan";
 import { createRequestHandler } from "@remix-run/express";
+import { getLoadContext } from "./context";
+import { handlePusherAuth } from "./handlers/pusher-auth";
 
 const MODE = process.env.NODE_ENV;
 const BUILD_DIR = path.join(process.cwd(), "server/build");
@@ -10,6 +12,8 @@ const BUILD_DIR = path.join(process.cwd(), "server/build");
 let app = express();
 app.use(compression());
 app.use(morgan("tiny"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // You may want to be more aggressive with this caching
 app.use(express.static("public", { maxAge: "1h" }));
@@ -17,14 +21,23 @@ app.use(express.static("public", { maxAge: "1h" }));
 // Remix fingerprints its assets so we can cache forever
 app.use(express.static("public/build", { immutable: true, maxAge: "1y" }));
 
+app.post("/pusher/auth", handlePusherAuth);
+
 app.all(
   "*",
   MODE === "production"
-    ? createRequestHandler({ build: require("./build") })
+    ? createRequestHandler({
+        build: require("./build"),
+        getLoadContext
+      })
     : (req, res, next) => {
         purgeRequireCache();
         let build = require("./build");
-        return createRequestHandler({ build, mode: MODE })(req, res, next);
+        return createRequestHandler({
+          build,
+          mode: MODE,
+          getLoadContext
+        })(req, res, next);
       }
 );
 
