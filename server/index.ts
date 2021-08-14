@@ -2,6 +2,7 @@ import path from "path";
 import express from "express";
 import compression from "compression";
 import morgan from "morgan";
+import helmet from "helmet";
 import { createRequestHandler } from "@remix-run/express";
 import { getLoadContext } from "./context";
 import { handlePusherAuth } from "./handlers/pusher-auth";
@@ -10,6 +11,11 @@ const MODE = process.env.NODE_ENV;
 const BUILD_DIR = path.join(process.cwd(), "server/build");
 
 let app = express();
+app.use(
+  helmet({
+    contentSecurityPolicy: false
+  })
+);
 app.use(compression());
 app.use(morgan("tiny"));
 

@@ -138,7 +138,8 @@ export default function Index() {
         style: {
           paddingLeft: "15px",
           paddingRight: 0
-        }
+        },
+        duration: 4000
       });
       return;
     }
@@ -149,7 +150,8 @@ export default function Index() {
         style: {
           paddingLeft: "15px",
           paddingRight: 0
-        }
+        },
+        duration: 4000
       }
     );
   }, [error, lastDeviceName, pendingSubmit]);
@@ -180,7 +182,8 @@ export default function Index() {
               style: {
                 paddingLeft: "15px",
                 paddingRight: 0
-              }
+              },
+              duration: 4000
             }
           );
         } catch (error) {
@@ -195,7 +198,8 @@ export default function Index() {
                 style: {
                   paddingLeft: "15px",
                   paddingRight: 0
-                }
+                },
+                duration: 4000
               }
             );
 
@@ -211,7 +215,8 @@ export default function Index() {
               style: {
                 paddingLeft: "15px",
                 paddingRight: 0
-              }
+              },
+              duration: 4000
             }
           );
         }

@@ -38,7 +38,8 @@ export function DiscoveredDevice({ device, channel, myDeviceName }: Props) {
               style: {
                 paddingLeft: "15px",
                 paddingRight: 0
-              }
+              },
+              duration: 4000
             }
           );
         }
