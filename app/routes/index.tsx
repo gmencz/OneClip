@@ -3,9 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { pusher } from "../utils/pusher.client";
 import { Device, useDevice } from "../utils/device";
 import type { Loader } from "../types";
-import { NetDevice } from "../components/net-device";
+import { NetDevice } from "../components/discovered-device";
 import { useMemo } from "react";
 import { Channel } from "pusher-js";
+import { ActionFunction } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
+import { rest } from "../utils/pusher.server";
+import { MyDevice } from "../components/my-device";
 
 export let meta: MetaFunction = () => {
   return {
@@ -51,13 +55,54 @@ const snakeCase = (str: string) => {
     .join("-");
 };
 
+type ClipboardData = {
+  from: string;
+  text: string;
+};
+
+export let action: ActionFunction = async ({ request }) => {
+  let body = new URLSearchParams(await request.text());
+  let from = body.get("from");
+  let deviceChannel = body.get("channel");
+  let text = body.get("text");
+
+  if (!deviceChannel) {
+    // Handle error
+    return redirect("/");
+  }
+
+  if (!from) {
+    // Handle error
+    return redirect("/");
+  }
+
+  if (!text) {
+    // Handle error
+    return redirect("/");
+  }
+
+  const response = await rest.trigger(deviceChannel, "copy-to-clipboard", {
+    from,
+    text
+  });
+
+  if (!response.ok) {
+    // Handle error
+    console.log(response.status);
+    return redirect("/");
+  }
+
+  return redirect("/");
+};
+
 export default function Index() {
   let { ip, notFound } = useRouteData<RouteData>();
   let [subscriptionsCount, setSubscriptionsCount] = useState(0);
   let [devices, setDevices] = useState<Device[]>([]);
-  let device = useDevice();
+  let myDevice = useDevice();
   let networkChannel = useRef<Channel>();
   let deviceChannel = useRef<Channel>();
+  let [clipboardText, setClipboardText] = useState("");
   let [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
 
@@ -69,25 +114,66 @@ export default function Index() {
     };
   }, [devices]);
 
-  let pc = useRef<RTCPeerConnection>();
+  useEffect(() => {
+    (async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        setClipboardText(text);
+      } catch (error) {
+        // Handle error
+        console.error(error);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
-    if (subscriptionsCount === 2 && device) {
+    if (subscriptionsCount === 2 && myDevice) {
       setConnectionStatus("success");
     }
-  }, [device, ip, subscriptionsCount]);
+  }, [myDevice, ip, subscriptionsCount]);
 
   useEffect(() => {
-    if (notFound || !device) {
+    if (!myDevice) {
+      return;
+    }
+
+    pusher.config = {
+      ...pusher.config,
+      auth: {
+        ...(pusher.config.auth || {}),
+        params: {
+          ...(pusher.config.auth?.params || {}),
+          device: JSON.stringify(myDevice)
+        }
+      }
+    };
+  }, [myDevice]);
+
+  useEffect(() => {
+    if (notFound || !myDevice) {
       return;
     }
 
     deviceChannel.current = pusher.subscribe(
-      `private-${snakeCase(device.name)}-${ip}`
+      `private-${snakeCase(myDevice.name)}-${ip}`
     );
     deviceChannel.current.bind("pusher:subscription_succeeded", () => {
       setSubscriptionsCount(prevCount => prevCount + 1);
     });
+
+    deviceChannel.current.bind(
+      "copy-to-clipboard",
+      async (data: ClipboardData) => {
+        console.log(`${data.from} wants to copy his clipboard to your device`);
+
+        try {
+          await navigator.clipboard.writeText(data.text);
+        } catch (error) {
+          // Handle error
+          console.error(error);
+        }
+      }
+    );
 
     networkChannel.current = pusher.subscribe(`presence-${ip}`);
     networkChannel.current.bind(
@@ -96,7 +182,7 @@ export default function Index() {
         setSubscriptionsCount(prevCount => prevCount + 1);
         setDevices(
           Object.keys(members)
-            .filter(memberId => memberId !== device?.name)
+            .filter(memberId => memberId !== myDevice?.name)
             .map(memberId => {
               return {
                 name: memberId,
@@ -122,32 +208,7 @@ export default function Index() {
         );
       }
     );
-  }, [device, ip, notFound]);
-
-  const sendClipboard = (toDevice: Device) => {
-    pc.current = new RTCPeerConnection();
-    let peerChannel = pusher.channel(
-      `private-${snakeCase(toDevice.name)}-${ip}`
-    );
-
-    pc.current.onicecandidate = ({ candidate }) => {
-      peerChannel.trigger("rtc-ice-candidate", { candidate });
-    };
-
-    pc.current.onnegotiationneeded = async () => {
-      try {
-        await pc.current?.setLocalDescription(await pc.current.createOffer());
-        peerChannel.trigger("rtc-negotation-needed", {
-          desc: pc.current?.localDescription
-        });
-      } catch (error) {
-        // Handle
-        console.error(error);
-      }
-    };
-
-    // TODO
-  };
+  }, [myDevice, ip, notFound]);
 
   if (notFound) {
     // TODO
@@ -160,36 +221,29 @@ export default function Index() {
         <div className="mt-auto flex gap-14 items-center justify-center flex-wrap mb-32">
           {devicesHalves.first.map(device => (
             <NetDevice
-              onClick={() => sendClipboard(device)}
+              clipboardText={clipboardText}
+              myDeviceName={myDevice?.name ?? ""}
               key={device.name}
               device={device}
+              channel={`private-${snakeCase(device.name)}-${ip}`}
             />
           ))}
 
-          <NetDevice
-            onClick={() => {
-              // Can't send to yourself!
-            }}
-            showRadar
-            device={{ name: "You", type: device!.type }}
-          />
+          <MyDevice type={myDevice?.type ?? "unknown"} />
 
           {devicesHalves.second.map(device => (
             <NetDevice
-              onClick={() => sendClipboard(device)}
+              clipboardText={clipboardText}
+              myDeviceName={myDevice?.name ?? ""}
               key={device.name}
               device={device}
+              channel={`private-${snakeCase(device.name)}-${ip}`}
             />
           ))}
         </div>
       ) : (
         <div className="mt-auto flex items-center justify-center mb-32">
-          <NetDevice
-            onClick={() => {
-              // Can't send yet, loading!
-            }}
-            device={{ name: "You", type: "unknown" }}
-          />
+          <MyDevice type="unknown" />
         </div>
       )}
 
@@ -213,7 +267,7 @@ export default function Index() {
           </>
         ) : connectionStatus === "success" ? (
           <>
-            <p className="text-gray-200">You are known as {device?.name}</p>
+            <p className="text-gray-200">You are known as {myDevice?.name}</p>
             <p className="text-brand text-sm mt-1.5">
               You can be discovered by everyone on this network
             </p>

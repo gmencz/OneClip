@@ -12,8 +12,6 @@ const BUILD_DIR = path.join(process.cwd(), "server/build");
 let app = express();
 app.use(compression());
 app.use(morgan("tiny"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // You may want to be more aggressive with this caching
 app.use(express.static("public", { maxAge: "1h" }));
@@ -21,7 +19,12 @@ app.use(express.static("public", { maxAge: "1h" }));
 // Remix fingerprints its assets so we can cache forever
 app.use(express.static("public/build", { immutable: true, maxAge: "1y" }));
 
-app.post("/pusher/auth", handlePusherAuth);
+app.post(
+  "/pusher/auth",
+  express.json(),
+  express.urlencoded({ extended: false }),
+  handlePusherAuth
+);
 
 app.all(
   "*",

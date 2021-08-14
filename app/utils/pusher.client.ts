@@ -9,12 +9,7 @@ if (!window.env.PUBLIC_PUSHER_KEY) {
 }
 
 let pusher = new Pusher(window.env.PUBLIC_PUSHER_KEY, {
-  cluster: window.env.PUBLIC_PUSHER_CLUSTER,
-  auth: {
-    params: {
-      device: localStorage.getItem("device") ?? undefined
-    }
-  }
+  cluster: window.env.PUBLIC_PUSHER_CLUSTER
 });
 
 export { pusher };

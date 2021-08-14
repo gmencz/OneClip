@@ -7,7 +7,8 @@
     "build:server": "tsc",
     "dev:server": "dotenv -e .env -- ts-node --transpile-only server/index.ts",
     "build:css": "tailwindcss -i ./styles/app.css -o ./app/styles/app.css --config ./tailwind.config.js --minify",
-    "dev:css": "tailwindcss -i ./styles/app.css -o ./app/styles/app.css --config ./tailwind.config.js --watch"
+    "dev:css": "tailwindcss -i ./styles/app.css -o ./app/styles/app.css --config ./tailwind.config.js --watch",
+    "dev": "concurrently npm:dev:*"
   },
   "dependencies": {
     "@remix-run/express": "^0.17.5",
@@ -38,6 +39,7 @@
     "@types/request-ip": "^0.0.37",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
+    "concurrently": "^6.2.1",
     "eslint": "^7.32.0",
     "eslint-config-react-app": "^6.0.0",
     "eslint-plugin-flowtype": "^5.9.0",
