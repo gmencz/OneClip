@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import styles from "./styles/app.css";
 import { Loader, Env } from "./types";
 import { getEnv } from "./utils/env";
+import { ErrorScreen } from "./components/error-screen";
 
 type RouteData = {
   env: Env;
@@ -98,12 +99,11 @@ export default function App() {
 export function ErrorBoundary({ error }: { error: Error }) {
   return (
     <Document>
-      <h1>App Error</h1>
-      <pre>{error.message}</pre>
-      <p>
-        Replace this UI with what you want users to see when your app throws
-        uncaught errors.
-      </p>
+      <ErrorScreen>
+        <p className="text-red-500 text-xl mt-auto">
+          Unexpected error: {error.message}
+        </p>
+      </ErrorScreen>
     </Document>
   );
 }
