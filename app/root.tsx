@@ -1,6 +1,7 @@
 import { LinksFunction, useRouteData } from "remix";
 import { Meta, Links, Scripts, LiveReload } from "remix";
 import { Outlet } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import styles from "./styles/app.css";
 import { Loader, Env } from "./types";
 import { getEnv } from "./utils/env";
@@ -89,6 +90,7 @@ export default function App() {
   return (
     <Document>
       <Outlet />
+      <Toaster />
     </Document>
   );
 }

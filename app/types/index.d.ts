@@ -15,4 +15,9 @@ type Loader<Params extends Record<string, unknown> = Record<string, unknown>> =
 
 type Env = ReturnType<typeof getEnv>;
 
+export type ClipboardData = {
+  from: string;
+  text: string;
+};
+
 export { Loader, Env };

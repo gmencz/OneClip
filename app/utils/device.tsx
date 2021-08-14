@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { uniqueNamesGenerator, animals, colors } from "unique-names-generator";
+import { useSubscription } from "./pusher-hooks";
 import {
   isConsole,
   isDesktop,
@@ -7,7 +9,7 @@ import {
   isTablet,
   isWearable
 } from "react-device-detect";
-import { uniqueNamesGenerator, animals, colors } from "unique-names-generator";
+import { useMemo } from "react";
 
 type DeviceType =
   | "mobile"
@@ -32,7 +34,7 @@ function generateDeviceName() {
   });
 }
 
-function useDevice(): Device | undefined {
+function useDeviceInfo(): Device | undefined {
   let [device, setDevice] = useState<Device>();
 
   useEffect(() => {
@@ -63,6 +65,14 @@ function useDevice(): Device | undefined {
   }, []);
 
   return device;
+}
+
+export function snakeCase(str: string) {
+  return str
+    .replace(/\W+/g, " ")
+    .split(/ |\B(?=[A-Z])/)
+    .map(word => word.toLowerCase())
+    .join("-");
 }
 
 function useDeviceIcon(type: string) {
@@ -146,4 +156,48 @@ function useDeviceIcon(type: string) {
   }
 }
 
-export { Device, DeviceType, generateDeviceName, useDevice, useDeviceIcon };
+type DeviceParams = {
+  ip: string;
+  shouldConnect?: boolean;
+};
+
+const defaultParams: DeviceParams = {
+  ip: "",
+  shouldConnect: true
+};
+
+function useDevice(params: DeviceParams = defaultParams) {
+  let info = useDeviceInfo();
+  let config = useMemo(() => {
+    if (!info) {
+      return undefined;
+    }
+
+    return { auth: { params: { device: JSON.stringify(info) } } };
+  }, [info]);
+
+  let selfSub = useSubscription(
+    `private-${snakeCase(info?.name ?? "")}-${params.ip}`,
+    {
+      enabled: !!info && params.shouldConnect,
+      config
+    }
+  );
+
+  let networkSub = useSubscription(`presence-${params.ip}`, {
+    enabled: !!info && params.shouldConnect,
+    config
+  });
+
+  return {
+    isConnecting: selfSub.isLoading || networkSub.isLoading,
+    isConnected: selfSub.isSuccess && networkSub.isSuccess,
+    isError: selfSub.isError || networkSub.isError,
+    error: selfSub.error,
+    info,
+    selfChannel: selfSub.channel,
+    networkChannel: networkSub.channel
+  };
+}
+
+export { Device, DeviceType, generateDeviceName, useDeviceIcon, useDevice };

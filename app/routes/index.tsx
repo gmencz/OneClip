@@ -1,15 +1,19 @@
-import { json, MetaFunction, useRouteData } from "remix";
-import { useState, useEffect, useRef } from "react";
-import { pusher } from "../utils/pusher.client";
-import { Device, useDevice } from "../utils/device";
-import type { Loader } from "../types";
-import { NetDevice } from "../components/discovered-device";
-import { useMemo } from "react";
-import { Channel } from "pusher-js";
-import { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import {
+  json,
+  MetaFunction,
+  useRouteData,
+  redirect,
+  ActionFunction
+} from "remix";
+import { useState, useEffect, Fragment } from "react";
+import { Device, snakeCase, useDevice } from "../utils/device";
 import { rest } from "../utils/pusher.server";
-import { MyDevice } from "../components/my-device";
+import { useClipboard } from "../utils/clipboard";
+import { DiscoveredDevice } from "../components/discovered-device";
+import type { ClipboardData, Loader } from "../types";
+import toast from "react-hot-toast";
+import { InformationCircleIcon } from "@heroicons/react/solid";
+import { Dialog, Transition } from "@headlessui/react";
 
 export let meta: MetaFunction = () => {
   return {
@@ -31,11 +35,6 @@ export let loader: Loader = async ({ context }) => {
   return { ip: Buffer.from(context.ip).toString("base64") };
 };
 
-type RouteData = {
-  ip: string;
-  notFound?: boolean;
-};
-
 type PresenceChannel = {
   members: Record<string, Omit<Device, "name">>;
 };
@@ -43,21 +42,6 @@ type PresenceChannel = {
 type MemberData = {
   id: string;
   info: Omit<Device, "name">;
-};
-
-type ConnectionStatus = "connecting" | "success" | "error";
-
-const snakeCase = (str: string) => {
-  return str
-    .replace(/\W+/g, " ")
-    .split(/ |\B(?=[A-Z])/)
-    .map(word => word.toLowerCase())
-    .join("-");
-};
-
-type ClipboardData = {
-  from: string;
-  text: string;
 };
 
 export let action: ActionFunction = async ({ request }) => {
@@ -95,94 +79,76 @@ export let action: ActionFunction = async ({ request }) => {
   return redirect("/");
 };
 
+type RouteData = {
+  ip: string;
+  notFound?: boolean;
+};
+
 export default function Index() {
   let { ip, notFound } = useRouteData<RouteData>();
-  let [subscriptionsCount, setSubscriptionsCount] = useState(0);
   let [devices, setDevices] = useState<Device[]>([]);
-  let myDevice = useDevice();
-  let networkChannel = useRef<Channel>();
-  let deviceChannel = useRef<Channel>();
-  let [clipboardText, setClipboardText] = useState("");
-  let [connectionStatus, setConnectionStatus] =
-    useState<ConnectionStatus>("connecting");
-
-  let devicesHalves = useMemo(() => {
-    let half = Math.ceil(devices.length / 2);
-    return {
-      first: devices.slice(0, half),
-      second: devices.slice(half)
-    };
-  }, [devices]);
+  let myDevice = useDevice({ ip, shouldConnect: !notFound });
+  let { copy, text, error } = useClipboard();
+  let [show, setShow] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const text = await navigator.clipboard.readText();
-        setClipboardText(text);
-      } catch (error) {
-        // Handle error
-        console.error(error);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (subscriptionsCount === 2 && myDevice) {
-      setConnectionStatus("success");
+    if (myDevice.isConnected) {
+      setShow(true);
     }
-  }, [myDevice, ip, subscriptionsCount]);
+  }, [myDevice.isConnected]);
 
   useEffect(() => {
-    if (!myDevice) {
-      return;
-    }
-
-    pusher.config = {
-      ...pusher.config,
-      auth: {
-        ...(pusher.config.auth || {}),
-        params: {
-          ...(pusher.config.auth?.params || {}),
-          device: JSON.stringify(myDevice)
+    if (error) {
+      toast.error(
+        "There was an error with your clipboard, make sure you have allowed OneClip to access it and refresh.",
+        {
+          duration: Infinity,
+          style: {
+            paddingRight: 0
+          }
         }
-      }
-    };
-  }, [myDevice]);
+      );
+    }
+  }, [error]);
 
   useEffect(() => {
-    if (notFound || !myDevice) {
+    if (!myDevice.selfChannel || !myDevice.networkChannel) {
       return;
     }
 
-    deviceChannel.current = pusher.subscribe(
-      `private-${snakeCase(myDevice.name)}-${ip}`
-    );
-    deviceChannel.current.bind("pusher:subscription_succeeded", () => {
-      setSubscriptionsCount(prevCount => prevCount + 1);
-    });
-
-    deviceChannel.current.bind(
+    myDevice.selfChannel.bind(
       "copy-to-clipboard",
-      async (data: ClipboardData) => {
-        console.log(`${data.from} wants to copy his clipboard to your device`);
-
+      async ({ from, text }: ClipboardData) => {
         try {
-          await navigator.clipboard.writeText(data.text);
+          await copy(text);
+          toast.success(
+            `Check your clipboard, ${from} just pasted something in it!`,
+            {
+              duration: 4000,
+              style: {
+                paddingRight: 0
+              }
+            }
+          );
         } catch (error) {
-          // Handle error
-          console.error(error);
+          toast.error(
+            `${from} tried to copy their clipboard in yours but your clipboard isn't working.`,
+            {
+              style: {
+                paddingRight: 0
+              }
+            }
+          );
         }
       }
     );
 
-    networkChannel.current = pusher.subscribe(`presence-${ip}`);
-    networkChannel.current.bind(
+    myDevice.networkChannel.bind(
       "pusher:subscription_succeeded",
       ({ members }: PresenceChannel) => {
-        setSubscriptionsCount(prevCount => prevCount + 1);
         setDevices(
           Object.keys(members)
-            .filter(memberId => memberId !== myDevice?.name)
+            .filter(memberId => memberId !== myDevice?.info?.name)
             .map(memberId => {
               return {
                 name: memberId,
@@ -193,14 +159,17 @@ export default function Index() {
       }
     );
 
-    networkChannel.current.bind("pusher:member_added", (member: MemberData) => {
-      setDevices(prevDevices => [
-        ...prevDevices,
-        { name: member.id, type: member.info.type }
-      ]);
-    });
+    myDevice.networkChannel.bind(
+      "pusher:member_added",
+      (member: MemberData) => {
+        setDevices(prevDevices => [
+          ...prevDevices,
+          { name: member.id, type: member.info.type }
+        ]);
+      }
+    );
 
-    networkChannel.current.bind(
+    myDevice.networkChannel.bind(
       "pusher:member_removed",
       (member: MemberData) => {
         setDevices(prevDevices =>
@@ -208,7 +177,12 @@ export default function Index() {
         );
       }
     );
-  }, [myDevice, ip, notFound]);
+  }, [
+    copy,
+    myDevice?.info?.name,
+    myDevice.networkChannel,
+    myDevice.selfChannel
+  ]);
 
   if (notFound) {
     // TODO
@@ -216,66 +190,135 @@ export default function Index() {
   }
 
   return (
-    <div className="flex flex-col justify-center min-h-screen p-12 bg-gray-900">
-      {connectionStatus === "success" ? (
-        <div className="mt-auto flex gap-14 items-center justify-center flex-wrap mb-32">
-          {devicesHalves.first.map(device => (
-            <NetDevice
-              clipboardText={clipboardText}
-              myDeviceName={myDevice?.name ?? ""}
-              key={device.name}
-              device={device}
-              channel={`private-${snakeCase(device.name)}-${ip}`}
-            />
-          ))}
+    <>
+      <Transition.Root show={show} as={Fragment}>
+        <Dialog
+          as="div"
+          auto-reopen="true"
+          className="fixed z-10 inset-0 overflow-y-auto"
+          onClose={() => setShow(false)}
+        >
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <Dialog.Overlay className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </Transition.Child>
 
-          <MyDevice type={myDevice?.type ?? "unknown"} />
+            {/* This element is to trick the browser into centering the modal contents. */}
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-6">
+                <div>
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                    <InformationCircleIcon
+                      className="h-6 w-6 text-green-600"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-5">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg leading-6 font-medium text-gray-900"
+                    >
+                      Stay on this page
+                    </Dialog.Title>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        If you go to another page or tab, nobody will be able to
+                        share their clipboard with you.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-5 sm:mt-6">
+                  <button
+                    type="button"
+                    className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-brand text-base font-medium text-white hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand sm:text-sm"
+                    onClick={() => setShow(false)}
+                  >
+                    Got it
+                  </button>
+                </div>
+              </div>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
 
-          {devicesHalves.second.map(device => (
-            <NetDevice
-              clipboardText={clipboardText}
-              myDeviceName={myDevice?.name ?? ""}
-              key={device.name}
-              device={device}
-              channel={`private-${snakeCase(device.name)}-${ip}`}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-auto flex items-center justify-center mb-32">
-          <MyDevice type="unknown" />
-        </div>
-      )}
-
-      <div className="mt-auto flex flex-col items-center text-center">
-        {connectionStatus === "connecting" ? (
-          <img
-            src="/logo.svg"
-            alt="OneClip"
-            className="h-14 w-14 mb-3 animate-spin"
-          />
-        ) : (
-          <img src="/logo.svg" alt="OneClip" className="h-14 w-14 mb-3" />
-        )}
-
-        {connectionStatus === "connecting" ? (
+      <div className="flex flex-col justify-center items-center min-h-screen p-12 bg-gray-900">
+        {myDevice.isConnecting ? (
           <>
+            <img
+              src="/logo.svg"
+              alt="OneClip"
+              className="h-14 w-14 mb-3 animate-spin"
+            />
+
             <p className="text-gray-200">Connecting you...</p>
-            <p className="text-brand text-sm mt-1.5">
-              Once connected, you'll be discoverable by everyone on this network
-            </p>
           </>
-        ) : connectionStatus === "success" ? (
+        ) : myDevice.isConnected && !!myDevice.info ? (
           <>
-            <p className="text-gray-200">You are known as {myDevice?.name}</p>
-            <p className="text-brand text-sm mt-1.5">
-              You can be discovered by everyone on this network
+            <div className="flex mt-auto gap-14 items-center justify-center flex-wrap mb-32">
+              {devices.length > 0 ? (
+                devices.map(device => (
+                  <DiscoveredDevice
+                    clipboardText={text}
+                    myDeviceName={myDevice.info?.name ?? ""}
+                    key={device.name}
+                    device={device}
+                    channel={`private-${snakeCase(device.name)}-${ip}`}
+                  />
+                ))
+              ) : (
+                <p className="text-brand text-xl">
+                  Open OneClip on other devices to share your clipboard
+                </p>
+              )}
+            </div>
+
+            <div className="mt-auto flex flex-col items-center text-center">
+              <img src="/logo.svg" alt="OneClip" className="h-14 w-14 mb-3" />
+              <p className="text-gray-200">
+                You are known as {myDevice?.info?.name}
+              </p>
+              <p className="text-brand text-sm mt-1.5">
+                You can be discovered by everyone on this network
+              </p>
+              {/* <p className="text-sm text-gray-200 mt-1.5">
+              Stay focused on this page for OneClip to work
+            </p> */}
+            </div>
+          </>
+        ) : (
+          <>
+            <img src="/logo.svg" alt="OneClip" className="h-14 w-14 mb-3" />
+
+            <p className="text-red-500">
+              Failed to connect, reason: {myDevice.error ?? "unknown"}
             </p>
           </>
-        ) : connectionStatus === "error" ? (
-          <p className="text-red-500">Error connecting</p>
-        ) : null}
+        )}
       </div>
-    </div>
+    </>
   );
 }
