@@ -15,31 +15,6 @@ import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
 import type { ClipboardData, Loader } from "../types";
 
-export let loader: Loader = async ({ context, request }) => {
-  if (!context.ip) {
-    return json(
-      { ip: "" },
-      {
-        status: 500
-      }
-    );
-  }
-
-  let session = await getSession(request.headers.get("Cookie"));
-  return json(
-    {
-      ip: Buffer.from(context.ip).toString("base64"),
-      error: session.get("error"),
-      lastDeviceName: session.get("lastDeviceName")
-    },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(session)
-      }
-    }
-  );
-};
-
 type PresenceChannel = {
   members: Record<string, Omit<Device, "name">>;
 };
@@ -47,6 +22,48 @@ type PresenceChannel = {
 type MemberData = {
   id: string;
   info: Omit<Device, "name">;
+};
+
+export let loader: Loader = async ({ context, request }) => {
+  let session = await getSession(request.headers.get("Cookie"));
+  if (!context.ip) {
+    return json(
+      { error: "failed to retrieve public IP address" },
+      {
+        status: 500
+      }
+    );
+  }
+
+  let base64IP = Buffer.from(context.ip).toString("base64");
+  let response = await rest.get({
+    path: `/channels/presence-${base64IP}/users`
+  });
+  if (!response.ok) {
+    return json(
+      { error: "server error" },
+      {
+        status: 500
+      }
+    );
+  }
+
+  let body = await response.json();
+  let allDevices = body.users.map((device: { id: string }) => device.id);
+
+  return json(
+    {
+      ip: base64IP,
+      clipboardError: session.get("clipboardError"),
+      lastDeviceName: session.get("lastDeviceName"),
+      allDevices
+    },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session)
+      }
+    }
+  );
 };
 
 export let action: ActionFunction = async ({ request }) => {
@@ -58,7 +75,7 @@ export let action: ActionFunction = async ({ request }) => {
   let deviceName = body.get("deviceName");
 
   if (!deviceChannel || !from || !text || !deviceName) {
-    session.flash("error", "Invalid payload");
+    session.flash("clipboardError", "Invalid payload");
 
     return redirect("/", {
       headers: {
@@ -73,7 +90,7 @@ export let action: ActionFunction = async ({ request }) => {
   });
 
   if (!response.ok) {
-    session.flash("error", "Invalid event");
+    session.flash("clipboardError", "Invalid event");
 
     return redirect("/", {
       headers: {
@@ -91,18 +108,23 @@ export let action: ActionFunction = async ({ request }) => {
 };
 
 type RouteData = {
-  ip: string;
+  ip?: string;
+  clipboardError?: string;
   error?: string;
   lastDeviceName?: string;
+  allDevices?: string[];
 };
 
 export default function Index() {
-  let { ip, error, lastDeviceName } = useRouteData<RouteData>();
+  let { ip, error, clipboardError, lastDeviceName, allDevices } =
+    useRouteData<RouteData>();
+
   let [devices, setDevices] = useState<Device[]>([]);
   let [showInfoModal, setShowInfoModal] = useState(false);
   let pendingSubmit = usePendingFormSubmit();
   let myDevice = useDevice({
     ip,
+    allDevices: allDevices ?? [],
     shouldConnect: !!ip
   });
 
@@ -124,8 +146,8 @@ export default function Index() {
       return;
     }
 
-    if (error) {
-      console.error(error);
+    if (clipboardError) {
+      console.error(clipboardError);
       toast.error(<span className="text-sm">Failed to share clipboard</span>, {
         style: {
           paddingLeft: "15px",
@@ -146,7 +168,7 @@ export default function Index() {
         duration: 4000
       }
     );
-  }, [error, lastDeviceName, pendingSubmit]);
+  }, [clipboardError, lastDeviceName, pendingSubmit]);
 
   useEffect(() => {
     if (myDevice.isConnected) {
@@ -251,11 +273,12 @@ export default function Index() {
     );
   }, [myDevice?.info?.name, myDevice.networkChannel, myDevice.selfChannel]);
 
-  if (!ip) {
+  if (error || !ip) {
     return (
       <ErrorScreen>
         <p className="text-red-500 text-xl mt-auto">
-          Failed to connect, reason: failed to retrieve public IP address
+          Failed to connect, reason:{" "}
+          {error ?? "failed to retrieve public IP address"}
         </p>
       </ErrorScreen>
     );

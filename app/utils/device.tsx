@@ -40,7 +40,11 @@ function generateDeviceName() {
   });
 }
 
-function useDeviceInfo(): Device | undefined {
+type UseDeviceInfoParams = {
+  allDevices: string[];
+};
+
+function useDeviceInfo(params: UseDeviceInfoParams): Device | undefined {
   let [device, setDevice] = useState<Device>();
 
   useEffect(() => {
@@ -51,6 +55,11 @@ function useDeviceInfo(): Device | undefined {
     }
 
     let name = generateDeviceName();
+    // Make sure the name generated is unique among all devices.
+    while (params.allDevices.includes(name)) {
+      name = generateDeviceName();
+    }
+
     let type: DeviceType = "unknown";
     if (isMobileOnly) {
       type = "mobile";
@@ -68,7 +77,7 @@ function useDeviceInfo(): Device | undefined {
 
     setDevice({ name, type });
     localStorage.setItem("device", JSON.stringify({ name, type }));
-  }, []);
+  }, [params.allDevices]);
 
   return device;
 }
@@ -155,17 +164,19 @@ function useDeviceIcon(type: string) {
 }
 
 type DeviceParams = {
-  ip: string;
+  ip?: string;
+  allDevices: string[];
   shouldConnect?: boolean;
 };
 
 const defaultParams: DeviceParams = {
   ip: "",
+  allDevices: [],
   shouldConnect: true
 };
 
 function useDevice(params: DeviceParams = defaultParams) {
-  let info = useDeviceInfo();
+  let info = useDeviceInfo({ allDevices: params.allDevices });
   let config = useMemo(() => {
     if (!info) {
       return undefined;
