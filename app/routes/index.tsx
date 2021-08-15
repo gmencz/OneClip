@@ -49,7 +49,16 @@ export let loader: Loader = async ({ context, request }) => {
   }
 
   let body = await response.json();
-  let allDevices = body.users.map((device: { id: string }) => device.id);
+  let allDevices = (body.users as { id: string }[]).map(device => device.id);
+
+  if (allDevices.length >= 100) {
+    return json(
+      { error: "network is full, try again later" },
+      {
+        status: 500
+      }
+    );
+  }
 
   return json(
     {
