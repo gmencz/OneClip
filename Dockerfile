@@ -18,7 +18,7 @@ WORKDIR /app
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 
-RUN npm run css:build && \
+RUN npm run build:css && \
   npm run build:remix && \
   npm run build:server
 
@@ -29,12 +29,11 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
-COPY --from=builder /app/server-build ./server/
-COPY --from=builder /app/build ./build
+COPY --from=builder /app/server ./server/
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
 
-CMD [ "node", "server/index.js" ]
+CMD [ "node", "server/s-build/server/index.js" ]

@@ -8,7 +8,8 @@
     "dev:server": "dotenv -e .env -- ts-node --transpile-only server/index.ts",
     "build:css": "tailwindcss -i ./styles/app.css -o ./app/styles/app.css --config ./tailwind.config.js --minify",
     "dev:css": "tailwindcss -i ./styles/app.css -o ./app/styles/app.css --config ./tailwind.config.js --watch",
-    "dev": "concurrently npm:dev:*"
+    "dev": "concurrently npm:dev:*",
+    "deploy": "flyctl deploy --build-arg REMIX_TOKEN=${REMIX_TOKEN}"
   },
   "dependencies": {
     "@headlessui/react": "^1.4.0",

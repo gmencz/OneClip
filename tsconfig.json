@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "server-build"
+    "outDir": "./server/s-build"
   },
   "include": ["server/**/*"]
 }

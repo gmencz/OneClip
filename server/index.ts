@@ -36,7 +36,7 @@ app.all(
   "*",
   MODE === "production"
     ? createRequestHandler({
-        build: require("./build"),
+        build: require("../../build"),
         getLoadContext
       })
     : (req, res, next) => {
