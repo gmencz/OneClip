@@ -11,13 +11,27 @@ const MODE = process.env.NODE_ENV;
 const BUILD_DIR = path.join(process.cwd(), "server/build");
 
 let app = express();
+
 app.use(
   helmet({
     contentSecurityPolicy: false
   })
 );
+
 app.use(compression());
+
 app.use(morgan("tiny"));
+
+if (MODE === "production") {
+  app.use((req, res, next) => {
+    if (req.get("X-Forwarded-Proto") == "http") {
+      // request was via http, so redirect to https
+      res.redirect("https://" + req.headers.host + req.url);
+    } else {
+      next();
+    }
+  });
+}
 
 // You may want to be more aggressive with this caching
 app.use(express.static("public", { maxAge: "1h" }));
