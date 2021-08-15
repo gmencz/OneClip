@@ -38,13 +38,13 @@ export let meta: MetaFunction = () => {
     "og:type": "article",
     "og:url": "https://oneclip.io/",
     "og:author": "https://twitter.com/gmencz",
-    "og:image": "https://oneclip.io/android-chrome-192x192",
+    "og:image": "https://oneclip.io/android-chrome-192x192.png",
     "og:description":
       "Share your clipboard with people nearby. Open Source, No Setup, No Signup.",
     "twitter:card": "summary_large_image",
     "twitter:author": "@gmencz",
     "twitter:site": "@gmencz",
-    "twitter:image": "https://oneclip.io/android-chrome-192x192",
+    "twitter:image": "https://oneclip.io/android-chrome-192x192.png",
     "twitter:description":
       "Share your clipboard with people nearby. Open Source, No Setup, No Signup.",
     "X-UA-Compatible": "IE=edge,chrome=1",
