@@ -15,7 +15,7 @@ export function Header() {
 
   return (
     <>
-      <div className="flex items-center space-x-5 ml-auto" title="Donate">
+      <div className="flex items-center space-x-5" title="Donate">
         <a href="https://www.paypal.me/gabrmendez">
           <svg
             xmlns="http://www.w3.org/2000/svg"

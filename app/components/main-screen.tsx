@@ -15,22 +15,33 @@ type Props = {
 
 export function MainScreen({ myDevice, devicesHalves, ip }: Props) {
   return (
-    <div className="flex flex-col h-full p-12 bg-gray-900 relative items-center justify-center">
-      <Header />
+    <div className="flex flex-col h-full bg-gray-900 relative items-center justify-center">
+      <div className="p-4 lg:py-6 lg:px-12 ml-auto">
+        <Header />
+      </div>
 
-      {myDevice.isConnecting ? (
-        <Connecting />
-      ) : myDevice.isConnected && !!myDevice.info ? (
-        <>
-          <DevicesList
-            devicesHalves={devicesHalves}
-            ip={ip}
-            myDevice={myDevice.info}
-          />
+      <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
+        {myDevice.isConnecting ? (
+          <Connecting />
+        ) : myDevice.isConnected && !!myDevice.info ? (
+          <>
+            <DevicesList
+              devicesHalves={devicesHalves}
+              ip={ip}
+              myDevice={myDevice.info}
+            />
 
-          <InfoFooter myDevice={myDevice.info} />
-        </>
-      ) : null}
+            {devicesHalves.first.length === 0 &&
+            devicesHalves.second.length === 0 ? (
+              <p className="text-gray-200 text-center mt-12">
+                Open OneClip on other devices to start sharing
+              </p>
+            ) : null}
+
+            <InfoFooter myDevice={myDevice.info} />
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

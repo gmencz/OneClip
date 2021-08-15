@@ -14,7 +14,7 @@ type Props = {
 
 export function DevicesList({ devicesHalves, myDevice, ip }: Props) {
   return (
-    <div className="flex mt-auto gap-14 items-center justify-center flex-wrap my-32">
+    <div className="flex mt-auto gap-14 items-center justify-center flex-wrap">
       {devicesHalves.first.map(device => (
         <DiscoveredDevice
           myDeviceName={myDevice.name}
