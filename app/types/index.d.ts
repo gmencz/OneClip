@@ -1,4 +1,5 @@
 import { LoaderFunction } from "remix";
+import { Device } from "../utils/device";
 import { getEnv } from "../utils/env";
 
 type LoaderContext = {
@@ -16,7 +17,7 @@ type Loader<Params extends Record<string, unknown> = Record<string, unknown>> =
 type Env = ReturnType<typeof getEnv>;
 
 export type ClipboardData = {
-  from: string;
+  from: Device;
   text: string;
 };
 

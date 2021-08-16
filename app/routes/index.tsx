@@ -14,6 +14,12 @@ import { ActivityInfoModal } from "../components/activity-info-modal";
 import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
 import type { ClipboardData, Loader } from "../types";
+import {
+  MAX_NOTIFICATIONS,
+  useNotifications
+} from "../components/notifications";
+import { nanoid } from "nanoid";
+import { useCallback } from "react";
 
 type PresenceChannel = {
   members: Record<string, Omit<Device, "name">>;
@@ -78,12 +84,13 @@ export let loader: Loader = async ({ context, request }) => {
 export let action: ActionFunction = async ({ request }) => {
   let session = await getSession(request.headers.get("Cookie"));
   let body = new URLSearchParams(await request.text());
-  let from = body.get("from");
+  let fromName = body.get("fromName");
+  let fromType = body.get("fromType");
   let deviceChannel = body.get("channel");
   let text = body.get("text");
   let deviceName = body.get("deviceName");
 
-  if (!deviceChannel || !from || !text || !deviceName) {
+  if (!deviceChannel || !fromName || !fromType || !text || !deviceName) {
     session.flash("clipboardError", "Invalid payload");
 
     return redirect("/", {
@@ -94,7 +101,10 @@ export let action: ActionFunction = async ({ request }) => {
   }
 
   const response = await rest.trigger(deviceChannel, "copy-to-clipboard", {
-    from,
+    from: {
+      name: fromName,
+      type: fromType
+    },
     text
   });
 
@@ -128,6 +138,7 @@ export default function Index() {
   let { ip, error, clipboardError, lastDeviceName, allDevices } =
     useRouteData<RouteData>();
 
+  let { notifications, setNotifications } = useNotifications();
   let [devices, setDevices] = useState<Device[]>([]);
   let [showInfoModal, setShowInfoModal] = useState(false);
   let pendingSubmit = usePendingFormSubmit();
@@ -167,16 +178,18 @@ export default function Index() {
       return;
     }
 
-    toast.success(
-      <span className="text-sm">Clipboard shared with {lastDeviceName}</span>,
-      {
-        style: {
-          paddingLeft: "15px",
-          paddingRight: 0
-        },
-        duration: 4000
-      }
-    );
+    if (lastDeviceName) {
+      toast.success(
+        <span className="text-sm">Clipboard shared with {lastDeviceName}</span>,
+        {
+          style: {
+            paddingLeft: "15px",
+            paddingRight: 0
+          },
+          duration: 4000
+        }
+      );
+    }
   }, [clipboardError, lastDeviceName, pendingSubmit]);
 
   useEffect(() => {
@@ -187,100 +200,120 @@ export default function Index() {
     }
   }, [myDevice.isConnected]);
 
+  let copyToClipboard = useCallback(
+    async ({ from, text }: ClipboardData) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast.success(
+          <span className="text-sm">
+            Check your clipboard, {from.name} just shared their clipboard with
+            you!
+          </span>,
+          {
+            style: {
+              paddingLeft: "15px",
+              paddingRight: 0
+            },
+            duration: 4000
+          }
+        );
+      } catch (error) {
+        if (notifications.length < MAX_NOTIFICATIONS) {
+          setNotifications(currentNotifications => [
+            ...currentNotifications,
+            {
+              id: nanoid(),
+              from: {
+                name: from.name,
+                type: from.type
+              },
+              text,
+              timestamp: new Date().toISOString()
+            }
+          ]);
+
+          return;
+        }
+
+        console.error(error);
+        toast.error(
+          <span className="text-sm">
+            {from.name} shared their clipboard with you but your notifications
+            folder is full so it couldn't be saved
+          </span>,
+          {
+            style: {
+              paddingLeft: "15px",
+              paddingRight: 0
+            },
+            duration: 4000
+          }
+        );
+      }
+    },
+    [notifications.length, setNotifications]
+  );
+
+  let joinNetwork = useCallback(
+    ({ members }: PresenceChannel) => {
+      setDevices(
+        Object.keys(members)
+          .filter(memberId => memberId !== myDevice?.info?.name)
+          .map(memberId => {
+            return {
+              name: memberId,
+              type: members[memberId].type
+            };
+          })
+      );
+    },
+    [myDevice?.info?.name]
+  );
+
+  let someoneJoined = useCallback((member: MemberData) => {
+    setDevices(prevDevices => [
+      ...prevDevices,
+      { name: member.id, type: member.info.type }
+    ]);
+  }, []);
+
+  let someoneLeft = useCallback((member: MemberData) => {
+    setDevices(prevDevices =>
+      prevDevices.filter(device => device.name !== member.id)
+    );
+  }, []);
+
   useEffect(() => {
     if (!myDevice.selfChannel || !myDevice.networkChannel) {
       return;
     }
 
-    myDevice.selfChannel.bind(
-      "copy-to-clipboard",
-      async ({ from, text }: ClipboardData) => {
-        try {
-          await navigator.clipboard.writeText(text);
-          toast.success(
-            <span className="text-sm">
-              Check your clipboard, {from} just shared their clipboard with you!
-            </span>,
-            {
-              style: {
-                paddingLeft: "15px",
-                paddingRight: 0
-              },
-              duration: 4000
-            }
-          );
-        } catch (error) {
-          console.error(error);
-          if (error instanceof DOMException) {
-            toast.error(
-              <span className="text-sm">
-                {from} shared their clipboard with you but this page wasn't open
-                and focused so it couldn't be saved
-              </span>,
-              {
-                style: {
-                  paddingLeft: "15px",
-                  paddingRight: 0
-                },
-                duration: 4000
-              }
-            );
+    myDevice.selfChannel.bind("copy-to-clipboard", copyToClipboard);
+    myDevice.networkChannel.bind("pusher:subscription_succeeded", joinNetwork);
+    myDevice.networkChannel.bind("pusher:member_added", someoneJoined);
+    myDevice.networkChannel.bind("pusher:member_removed", someoneLeft);
 
-            return;
-          }
-
-          toast.error(
-            <span className="text-sm">
-              {from} shared their clipboard with you but something went wrong
-              copying it
-            </span>,
-            {
-              style: {
-                paddingLeft: "15px",
-                paddingRight: 0
-              },
-              duration: 4000
-            }
-          );
-        }
+    return () => {
+      if (!myDevice.selfChannel || !myDevice.networkChannel) {
+        return;
       }
-    );
 
-    myDevice.networkChannel.bind(
-      "pusher:subscription_succeeded",
-      ({ members }: PresenceChannel) => {
-        setDevices(
-          Object.keys(members)
-            .filter(memberId => memberId !== myDevice?.info?.name)
-            .map(memberId => {
-              return {
-                name: memberId,
-                type: members[memberId].type
-              };
-            })
-        );
-      }
-    );
-
-    myDevice.networkChannel.bind(
-      "pusher:member_added",
-      (member: MemberData) => {
-        setDevices(prevDevices => [
-          ...prevDevices,
-          { name: member.id, type: member.info.type }
-        ]);
-      }
-    );
-
-    myDevice.networkChannel.bind(
-      "pusher:member_removed",
-      (member: MemberData) => {
-        setDevices(prevDevices =>
-          prevDevices.filter(device => device.name !== member.id)
-        );
-      }
-    );
-  }, [myDevice?.info?.name, myDevice.networkChannel, myDevice.selfChannel]);
+      myDevice.selfChannel.unbind("copy-to-clipboard", copyToClipboard);
+      myDevice.networkChannel.unbind(
+        "pusher:subscription_succeeded",
+        joinNetwork
+      );
+      myDevice.networkChannel.unbind("pusher:member_added", someoneJoined);
+      myDevice.networkChannel.unbind("pusher:member_removed", someoneLeft);
+    };
+  }, [
+    copyToClipboard,
+    joinNetwork,
+    myDevice.networkChannel,
+    myDevice.selfChannel,
+    someoneJoined,
+    someoneLeft
+  ]);
 
   if (myDevice.isFirefox) {
     return (

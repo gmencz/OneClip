@@ -17,7 +17,7 @@ export function DevicesList({ devicesHalves, myDevice, ip }: Props) {
     <div className="flex mt-auto gap-14 items-center justify-center flex-wrap">
       {devicesHalves.first.map(device => (
         <DiscoveredDevice
-          myDeviceName={myDevice.name}
+          myDevice={myDevice}
           key={device.name}
           device={device}
           channel={`private-${snakeCase(device.name)}-${ip}`}
@@ -28,7 +28,7 @@ export function DevicesList({ devicesHalves, myDevice, ip }: Props) {
 
       {devicesHalves.second.map(device => (
         <DiscoveredDevice
-          myDeviceName={myDevice.name}
+          myDevice={myDevice}
           key={device.name}
           device={device}
           channel={`private-${snakeCase(device.name)}-${ip}`}

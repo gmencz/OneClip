@@ -13,7 +13,7 @@ export function InfoFooter({ myDevice }: Props) {
       <img
         src="/logo.svg"
         alt="OneClip"
-        className={`${pendingSubmit ? "spin" : ""} h-14 w-14 mb-3`}
+        className={`${pendingSubmit ? "animate-spin" : ""} h-14 w-14 mb-3`}
       />
       <p className="text-gray-200">You are known as {myDevice.name}</p>
       <p className="text-brand text-sm mt-1.5">

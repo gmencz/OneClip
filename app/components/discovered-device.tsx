@@ -1,14 +1,14 @@
 import toast from "react-hot-toast";
-import { Form, useSubmit } from "remix";
+import { useSubmit } from "remix";
 import { Device, useDeviceIcon } from "../utils/device";
 
 type Props = {
   device: Device;
   channel: string;
-  myDeviceName: string;
+  myDevice: Device;
 };
 
-export function DiscoveredDevice({ device, channel, myDeviceName }: Props) {
+export function DiscoveredDevice({ device, channel, myDevice }: Props) {
   let icon = useDeviceIcon(device.type);
   let submit = useSubmit();
 
@@ -17,10 +17,24 @@ export function DiscoveredDevice({ device, channel, myDeviceName }: Props) {
       onClick={async () => {
         try {
           let text = await navigator.clipboard.readText();
+          if (!text) {
+            toast.error(
+              <span className="text-sm">Your clipboard is empty</span>,
+              {
+                style: {
+                  paddingLeft: "15px",
+                  paddingRight: 0
+                },
+                duration: 4000
+              }
+            );
+          }
+
           let formData = new FormData();
           formData.append("deviceName", device.name);
           formData.append("channel", channel);
-          formData.append("from", myDeviceName);
+          formData.append("fromName", myDevice.name);
+          formData.append("fromType", myDevice.type);
           formData.append("text", text);
 
           submit(formData, {

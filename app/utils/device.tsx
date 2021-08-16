@@ -84,13 +84,13 @@ function useDeviceInfo(params: UseDeviceInfoParams): Device | undefined {
   return device;
 }
 
-function useDeviceIcon(type: string) {
+function useDeviceIcon(type: string, size: "sm" | "lg" = "lg") {
   switch (type) {
     case "console":
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12"
+          className={size === "lg" ? "h-12 w-12" : "h-6 w-6"}
           viewBox="0 0 24 24"
           fill="currentColor"
         >
@@ -101,7 +101,7 @@ function useDeviceIcon(type: string) {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12"
+          className={size === "lg" ? "h-12 w-12" : "h-6 w-6"}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -116,7 +116,7 @@ function useDeviceIcon(type: string) {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12"
+          className={size === "lg" ? "h-12 w-12" : "h-6 w-6"}
           viewBox="0 0 24 24"
           fill="currentColor"
         >
@@ -127,7 +127,7 @@ function useDeviceIcon(type: string) {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12"
+          className={size === "lg" ? "h-12 w-12" : "h-6 w-6"}
           viewBox="0 0 24 24"
           fill="currentColor"
         >
@@ -138,7 +138,7 @@ function useDeviceIcon(type: string) {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12"
+          className={size === "lg" ? "h-12 w-12" : "h-6 w-6"}
           viewBox="0 0 24 24"
           fill="currentColor"
         >
@@ -151,7 +151,7 @@ function useDeviceIcon(type: string) {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12"
+          className={size === "lg" ? "h-12 w-12" : "h-6 w-6"}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -191,7 +191,7 @@ function useDevice(params: DeviceParams = defaultParams) {
   }, [info]);
 
   useEffect(() => {
-    if (enabled && config) {
+    if (enabled && config && !pusher) {
       setPusher(
         new Pusher(window.env.PUBLIC_PUSHER_KEY!, {
           cluster: window.env.PUBLIC_PUSHER_CLUSTER,
@@ -199,7 +199,7 @@ function useDevice(params: DeviceParams = defaultParams) {
         })
       );
     }
-  }, [config, enabled]);
+  }, [config, enabled, pusher]);
 
   let selfSub = useSubscription(
     pusher,

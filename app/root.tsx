@@ -7,6 +7,7 @@ import { Loader, Env } from "./types";
 import { getEnv } from "./utils/env";
 import { ErrorScreen } from "./components/error-screen";
 import { MetaFunction } from "@remix-run/react/routeModules";
+import { NotificationsProvider } from "./components/notifications";
 
 type RouteData = {
   env: Env;
@@ -82,6 +83,7 @@ function Document({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <noscript>OneClip requires JavaScript.</noscript>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link
@@ -119,8 +121,10 @@ function Document({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Document>
-      <Outlet />
-      <Toaster />
+      <NotificationsProvider>
+        <Outlet />
+        <Toaster />
+      </NotificationsProvider>
     </Document>
   );
 }

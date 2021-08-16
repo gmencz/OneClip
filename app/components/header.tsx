@@ -4,18 +4,60 @@ import {
   InformationCircleIcon,
   XIcon
 } from "@heroicons/react/solid";
+import { useMemo } from "react";
 import { Fragment, useState } from "react";
+import {
+  MAX_NOTIFICATIONS,
+  NotificationItem,
+  useNotifications
+} from "./notifications";
 
 export function Header() {
   let [showInfo, setShowInfo] = useState(false);
+  let [showNotifications, setShowNotifications] = useState(false);
+  let { notifications } = useNotifications();
+  let sortedNotifications = useMemo(
+    () =>
+      [...notifications].sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ),
+    [notifications]
+  );
 
   let dismissInfo = () => {
     setShowInfo(false);
   };
 
+  let dismissNotifications = () => {
+    setShowNotifications(false);
+  };
+
   return (
     <>
-      <div className="flex items-center space-x-5">
+      <div className="flex items-center space-x-6">
+        <button
+          onClick={() => setShowNotifications(true)}
+          title="Notifications"
+          className="relative"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-7 h-7 text-gray-200 hover:text-white"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+          </svg>
+          <span className="sr-only">Notifications</span>
+
+          {notifications.length > 0 ? (
+            <span className="ring-2 ring-gray-900 absolute -top-0.5 -right-1 w-4 h-4 flex items-center justify-center rounded-full font-bold text-xs bg-brand text-gray-200">
+              {notifications.length}
+            </span>
+          ) : null}
+        </button>
+
         <a href="https://www.paypal.me/gabrmendez" title="Donate">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -48,6 +90,106 @@ export function Header() {
           <span className="sr-only">Info</span>
         </button>
       </div>
+
+      <Transition.Root show={showNotifications} as={Fragment}>
+        <Dialog
+          as="div"
+          auto-reopen="true"
+          className="fixed inset-0 overflow-hidden"
+          onClose={dismissNotifications}
+        >
+          <div className="absolute inset-0 overflow-hidden">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-in-out duration-500"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in-out duration-500"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <Dialog.Overlay className="absolute inset-0 bg-gray-700 bg-opacity-75 transition-opacity" />
+            </Transition.Child>
+            <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+              <Transition.Child
+                as={Fragment}
+                enter="transform transition ease-in-out duration-500 sm:duration-700"
+                enterFrom="translate-x-full"
+                enterTo="translate-x-0"
+                leave="transform transition ease-in-out duration-500 sm:duration-700"
+                leaveFrom="translate-x-0"
+                leaveTo="translate-x-full"
+              >
+                <div className="relative w-screen max-w-lg">
+                  <Transition.Child
+                    as={Fragment}
+                    enter="ease-in-out duration-500"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="ease-in-out duration-500"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <div className="absolute top-0 left-0 -ml-8 pt-4 pr-2 flex sm:-ml-10 sm:pr-4">
+                      <button
+                        className="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+                        onClick={dismissNotifications}
+                      >
+                        <span className="sr-only">Close panel</span>
+                        <XIcon className="h-6 w-6" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </Transition.Child>
+                  <div className="h-full flex flex-col py-6 bg-gray-900 shadow-xl overflow-y-scroll">
+                    <div className="px-4 sm:px-6">
+                      <Dialog.Title className="text-lg font-medium text-gray-200">
+                        Notifications
+                      </Dialog.Title>
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="mt-6 relative flex-1 px-4 sm:px-6 text-gray-300">
+                        <p>You don't have any notifications.</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-700 px-4 sm:px-6">
+                        <div className="flow-root mt-6">
+                          <ul className="-my-5 divide-y divide-gray-700">
+                            {sortedNotifications.map(notification => (
+                              <NotificationItem
+                                key={notification.id}
+                                notification={notification}
+                              />
+                            ))}
+                          </ul>
+                        </div>
+
+                        {notifications.length >= MAX_NOTIFICATIONS ? (
+                          <div className="mt-5 pt-4 text-sm text-gray-300">
+                            <p>
+                              Your notifications folder is full so you won't
+                              receive any new notifications until you delete
+                              something.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="mt-5 pt-4 text-sm text-gray-300">
+                            <p>
+                              You can store{" "}
+                              {MAX_NOTIFICATIONS - notifications.length}{" "}
+                              notifications more before your folder is full.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
 
       <Transition.Root show={showInfo} as={Fragment}>
         <Dialog
