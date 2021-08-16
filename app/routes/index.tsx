@@ -10,7 +10,6 @@ import { useState, useEffect, useMemo } from "react";
 import { Device, useDevice } from "../utils/device";
 import { rest } from "../utils/pusher.server";
 import { commitSession, getSession } from "../utils/sessions";
-import { ActivityInfoModal } from "../components/activity-info-modal";
 import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
 import type { ClipboardData, Loader } from "../types";
@@ -140,7 +139,6 @@ export default function Index() {
 
   let { notifications, setNotifications } = useNotifications();
   let [devices, setDevices] = useState<Device[]>([]);
-  let [showInfoModal, setShowInfoModal] = useState(false);
   let pendingSubmit = usePendingFormSubmit();
   let myDevice = useDevice({
     ip,
@@ -155,11 +153,6 @@ export default function Index() {
       second: devices.slice(half)
     };
   }, [devices]);
-
-  let dismissInfoModal = () => {
-    setShowInfoModal(false);
-    localStorage.setItem("saw-info-modal", "1");
-  };
 
   useEffect(() => {
     if (pendingSubmit) {
@@ -191,14 +184,6 @@ export default function Index() {
       );
     }
   }, [clipboardError, lastDeviceName, pendingSubmit]);
-
-  useEffect(() => {
-    if (myDevice.isConnected) {
-      if (!localStorage.getItem("saw-info-modal")) {
-        setShowInfoModal(true);
-      }
-    }
-  }, [myDevice.isConnected]);
 
   let copyToClipboard = useCallback(
     async ({ from, text }: ClipboardData) => {
@@ -357,9 +342,6 @@ export default function Index() {
   }
 
   return (
-    <>
-      <ActivityInfoModal show={showInfoModal} onClose={dismissInfoModal} />
-      <MainScreen ip={ip} devicesHalves={devicesHalves} myDevice={myDevice} />
-    </>
+    <MainScreen ip={ip} devicesHalves={devicesHalves} myDevice={myDevice} />
   );
 }

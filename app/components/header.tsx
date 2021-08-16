@@ -256,8 +256,11 @@ export function Header() {
                         All you need to do is open OneClip on your nearby
                         devices and they will be discovered. To share your
                         clipboard with one of the devices, click/tap on the
-                        device to which you want to share your clipboard with
-                        and your clipboard will be pasted into the device's.
+                        device to which you want to share your clipboard with.
+                        If the other device has OneClip open and focused, your
+                        clipboard will be pasted into theirs, else, the other
+                        device will be notified that you shared your clipboard
+                        with them.
                       </p>
 
                       <p className="mt-4">
@@ -265,23 +268,6 @@ export function Header() {
                         devices in the same network, this is what makes OneClip
                         secure.
                       </p>
-
-                      <div className="mt-6 rounded-md bg-gray-800 p-4">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <InformationCircleIcon
-                              className="h-5 w-5 text-green-400"
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <div className="ml-3 flex-1 md:flex md:justify-between">
-                            <p className="text-sm text-green-500">
-                              Devices interested in sharing must keep OneClip
-                              open and focused.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
 
                       <div className="mt-4 rounded-md bg-gray-800 p-4">
                         <div className="flex">
