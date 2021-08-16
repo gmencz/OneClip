@@ -129,7 +129,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   return (
     <Document>
       <ErrorScreen>
-        <p className="text-red-500 text-xl mt-auto">
+        <p className="text-red-500 text-lg mt-auto">
           Unexpected error: {error.message}
         </p>
       </ErrorScreen>

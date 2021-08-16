@@ -1,7 +1,7 @@
 export function Connecting() {
   return (
     <>
-      <p className="text-gray-200 text-xl mt-auto text-center">Connecting...</p>
+      <p className="text-gray-200 text-lg mt-auto text-center">Connecting...</p>
 
       <img
         src="/logo.svg"

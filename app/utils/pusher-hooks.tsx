@@ -1,7 +1,5 @@
-import { Channel } from "pusher-js";
-import { Config } from "pusher-js/types/src/core/config";
+import Pusher, { Channel } from "pusher-js";
 import { useEffect, useRef, useState } from "react";
-import { pusher } from "./pusher.client";
 
 type SubscriptionError = {
   type: string;
@@ -14,15 +12,7 @@ type State = {
   error: string | null;
 };
 
-type UseSubscriptionOptions = {
-  enabled?: boolean;
-  config?: Partial<Config>;
-};
-
-function useSubscription(
-  channelName: string,
-  options?: UseSubscriptionOptions
-) {
+function useSubscription(pusher: Pusher | undefined, channelName: string) {
   let channel = useRef<Channel>();
   let [state, setState] = useState<State>({
     status: "loading",
@@ -30,12 +20,8 @@ function useSubscription(
   });
 
   useEffect(() => {
-    if (!options?.enabled) {
+    if (!pusher) {
       return;
-    }
-
-    if (options.config) {
-      pusher.config = { ...pusher.config, ...options.config };
     }
 
     channel.current = pusher.subscribe(channelName);
@@ -56,7 +42,7 @@ function useSubscription(
         });
       }
     );
-  }, [channelName, options?.config, options?.enabled]);
+  }, [channelName, pusher]);
 
   return {
     channel: channel.current,

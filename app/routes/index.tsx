@@ -282,10 +282,30 @@ export default function Index() {
     );
   }, [myDevice?.info?.name, myDevice.networkChannel, myDevice.selfChannel]);
 
+  if (myDevice.isFirefox) {
+    return (
+      <ErrorScreen>
+        <p className="text-red-500 text-lg mt-auto">
+          Firefox is not supported. Download Chrome/Edge/Opera/Brave.
+        </p>
+      </ErrorScreen>
+    );
+  }
+
+  if (myDevice.isIE) {
+    return (
+      <ErrorScreen>
+        <p className="text-red-500 text-lg mt-auto">
+          Internet Explorer is not supported. Download Chrome/Edge/Opera/Brave.
+        </p>
+      </ErrorScreen>
+    );
+  }
+
   if (error || !ip) {
     return (
       <ErrorScreen>
-        <p className="text-red-500 text-xl mt-auto">
+        <p className="text-red-500 text-lg mt-auto">
           Failed to connect, reason:{" "}
           {error ?? "failed to retrieve public IP address"}
         </p>
@@ -296,7 +316,7 @@ export default function Index() {
   if (myDevice.isError) {
     return (
       <ErrorScreen>
-        <p className="text-red-500 text-xl mt-auto">
+        <p className="text-red-500 text-lg mt-auto">
           Failed to connect, reason: {myDevice.error || "unknown"}
         </p>
       </ErrorScreen>

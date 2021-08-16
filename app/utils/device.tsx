@@ -1,20 +1,22 @@
-import { useEffect, useState } from "react";
+import Pusher from "pusher-js";
+import { useEffect, useState, useMemo } from "react";
 import {
   uniqueNamesGenerator,
   animals,
   colors,
   adjectives
 } from "unique-names-generator";
-import { useSubscription } from "./pusher-hooks";
 import {
   isConsole,
   isDesktop,
   isMobileOnly,
   isSmartTV,
   isTablet,
-  isWearable
+  isWearable,
+  isFirefox,
+  isIE
 } from "react-device-detect";
-import { useMemo } from "react";
+import { useSubscription } from "./pusher-hooks";
 import { snakeCase } from "./words";
 
 type DeviceType =
@@ -176,7 +178,10 @@ const defaultParams: DeviceParams = {
 };
 
 function useDevice(params: DeviceParams = defaultParams) {
+  let [pusher, setPusher] = useState<Pusher>();
+  let isSupported = !isFirefox && !isIE;
   let info = useDeviceInfo({ allDevices: params.allDevices });
+  let enabled = !!info && params.shouldConnect && isSupported;
   let config = useMemo(() => {
     if (!info) {
       return undefined;
@@ -185,20 +190,27 @@ function useDevice(params: DeviceParams = defaultParams) {
     return { auth: { params: { device: JSON.stringify(info) } } };
   }, [info]);
 
-  let selfSub = useSubscription(
-    `private-${snakeCase(info?.name ?? "")}-${params.ip}`,
-    {
-      enabled: !!info && params.shouldConnect,
-      config
+  useEffect(() => {
+    if (enabled && config) {
+      setPusher(
+        new Pusher(window.env.PUBLIC_PUSHER_KEY!, {
+          cluster: window.env.PUBLIC_PUSHER_CLUSTER,
+          ...config
+        })
+      );
     }
+  }, [config, enabled]);
+
+  let selfSub = useSubscription(
+    pusher,
+    `private-${snakeCase(info?.name ?? "")}-${params.ip}`
   );
 
-  let networkSub = useSubscription(`presence-${params.ip}`, {
-    enabled: !!info && params.shouldConnect,
-    config
-  });
+  let networkSub = useSubscription(pusher, `presence-${params.ip}`);
 
   return {
+    isFirefox,
+    isIE,
     isConnecting: selfSub.isLoading || networkSub.isLoading,
     isConnected: selfSub.isSuccess && networkSub.isSuccess,
     isError: selfSub.isError || networkSub.isError,
