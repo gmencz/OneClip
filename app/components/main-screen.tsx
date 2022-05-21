@@ -1,4 +1,5 @@
-import type { Device, useDevice } from "../utils/device";
+import type { useDevice } from "~/hooks/use-device";
+import type { Device } from "~/types";
 import { Connecting } from "./connecting";
 import { DevicesList } from "./devices-list";
 import { Header } from "./header";

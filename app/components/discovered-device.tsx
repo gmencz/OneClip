@@ -1,15 +1,15 @@
 import { useSubmit } from "@remix-run/react";
 import toast from "react-hot-toast";
-import type { Device } from "../utils/device";
-import { useDeviceIcon } from "../utils/device";
+import { useDeviceIcon } from "~/hooks/use-device-icon";
+import type { Device } from "~/types";
 
-type Props = {
+interface Props {
   device: Device;
   channel: string;
   myDevice: Device;
-};
+}
 
-export function DiscoveredDevice({ device, channel, myDevice }: Props) {
+function DiscoveredDevice({ device, channel, myDevice }: Props) {
   const icon = useDeviceIcon(device.type);
   const submit = useSubmit();
 
@@ -109,3 +109,5 @@ export function DiscoveredDevice({ device, channel, myDevice }: Props) {
     </button>
   );
 }
+
+export { DiscoveredDevice };

@@ -1,4 +1,4 @@
-import type { Device } from "../utils/device";
+import type { Device } from "~/types";
 import { snakeCase } from "../utils/strings";
 import { DiscoveredDevice } from "./discovered-device";
 import { MyDevice } from "./my-device";

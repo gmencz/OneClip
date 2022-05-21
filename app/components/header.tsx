@@ -6,11 +6,9 @@ import {
 } from "@heroicons/react/solid";
 import { useMemo } from "react";
 import { Fragment, useState } from "react";
-import {
-  MAX_NOTIFICATIONS,
-  NotificationItem,
-  useNotifications
-} from "./notifications";
+import { MAX_NOTIFICATIONS } from "~/constants";
+import { useNotifications } from "~/hooks/use-notifications";
+import { NotificationItem } from "./notification-item";
 
 export function Header() {
   let [showInfo, setShowInfo] = useState(false);

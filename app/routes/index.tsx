@@ -1,17 +1,17 @@
 import { useState } from "react";
-import type { Device } from "../utils/device";
-import { DeviceSubscriptions } from "../utils/device";
-import { useDevice } from "../utils/device";
 import { rest } from "../utils/pusher.server";
 import { commitSession, getSession } from "../utils/sessions";
 import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
-import { useNotifications } from "../components/notifications";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { getClientIPAddress } from "remix-utils";
-import { ClipboardToasts } from "~/utils/clipboard";
+import { ClipboardToasts } from "~/components/clipboard-toasts";
+import { DeviceSubscriptions } from "~/components/device-subscriptions";
+import type { Device } from "~/types";
+import { useDevice } from "~/hooks/use-device";
+import { useNotifications } from "~/hooks/use-notifications";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));

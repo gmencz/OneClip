@@ -1,0 +1,3 @@
+const MAX_NOTIFICATIONS = 10;
+
+export { MAX_NOTIFICATIONS };

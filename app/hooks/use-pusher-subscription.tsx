@@ -1,5 +1,5 @@
-import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
+import type { Channel } from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
 interface SubscriptionError {
@@ -8,14 +8,17 @@ interface SubscriptionError {
   status: number;
 }
 
-interface State {
+interface SubscriptionState {
   status: "loading" | "success" | "error";
   error: string | null;
 }
 
-function useSubscription(pusher: Pusher | undefined, channelName: string) {
+function usePusherSubscription(
+  pusher: Pusher | undefined,
+  channelName: string
+) {
   const channel = useRef<Channel>();
-  const [state, setState] = useState<State>({
+  const [state, setState] = useState<SubscriptionState>({
     status: "loading",
     error: null
   });
@@ -55,4 +58,4 @@ function useSubscription(pusher: Pusher | undefined, channelName: string) {
   };
 }
 
-export { useSubscription };
+export { usePusherSubscription };

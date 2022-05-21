@@ -1,5 +1,5 @@
 import { useTransition } from "@remix-run/react";
-import type { Device } from "../utils/device";
+import type { Device } from "~/types";
 
 type Props = {
   myDevice: Device;

@@ -1,55 +1,10 @@
-import type { Dispatch, ReactNode } from "react";
-import { createContext } from "react";
-import useLocalStorageState from "use-local-storage-state";
-import { useContext } from "react";
 import { ClipboardCopyIcon, TrashIcon } from "@heroicons/react/solid";
-import toast from "react-hot-toast";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
-import type { Device } from "../utils/device";
-import { useDeviceIcon } from "../utils/device";
-import { copyDataToClipboard } from "~/utils/clipboard";
-
-export interface Notification {
-  id: string;
-  from: Device;
-  timestamp: string;
-  text: string;
-}
-
-interface NotificationsStore {
-  notifications: Notification[];
-  setNotifications: Dispatch<Notification[]>;
-}
-
-const NotificationsContext = createContext<NotificationsStore | null>(null);
-
-interface Props {
-  children: ReactNode;
-}
-
-const localStorageKey = "notifications";
-function NotificationsProvider({ children }: Props) {
-  const [notifications, setNotifications] = useLocalStorageState<
-    Notification[]
-  >(localStorageKey, { defaultValue: [] });
-
-  return (
-    <NotificationsContext.Provider value={{ notifications, setNotifications }}>
-      {children}
-    </NotificationsContext.Provider>
-  );
-}
-
-function useNotifications() {
-  const context = useContext(NotificationsContext);
-  if (!context) {
-    throw new Error(
-      "useNotifications can only be used within a NotificationsProvider"
-    );
-  }
-
-  return context;
-}
+import toast from "react-hot-toast";
+import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
+import { useDeviceIcon } from "~/hooks/use-device-icon";
+import { useNotifications } from "~/hooks/use-notifications";
+import type { Notification } from "~/types";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -67,15 +22,20 @@ function formatNotificationTimestamp(timestamp: string) {
   }
 }
 
-export const MAX_NOTIFICATIONS = 10;
-
 function NotificationItem({ notification }: NotificationItemProps) {
   const icon = useDeviceIcon(notification.from.type, "sm");
   const { notifications, setNotifications } = useNotifications();
+  const copyToClipboard = useCopyToClipboard({
+    notifications,
+    setNotifications
+  });
 
-  const copyToClipboard = async () => {
+  const onClickCopy = async () => {
     try {
-      await copyDataToClipboard(notification.text);
+      await copyToClipboard({
+        from: notification.from,
+        text: notification.text
+      });
       toast.success(
         <span className="text-sm">
           Copied {notification.from.name}'s clipboard
@@ -89,7 +49,6 @@ function NotificationItem({ notification }: NotificationItemProps) {
         }
       );
     } catch (error) {
-      console.error(error);
       toast.error(
         <span className="text-sm">
           Something went wrong copying {notification.from.name}'s clipboard
@@ -124,7 +83,7 @@ function NotificationItem({ notification }: NotificationItemProps) {
         </div>
         <div className="flex items-center space-x-2.5">
           <button
-            onClick={copyToClipboard}
+            onClick={onClickCopy}
             className="bg-gray-700 flex items-center justify-center rounded-full p-2 text-green-500 hover:text-green-400 hover:bg-gray-800"
           >
             <ClipboardCopyIcon
@@ -148,4 +107,4 @@ function NotificationItem({ notification }: NotificationItemProps) {
   );
 }
 
-export { NotificationsProvider, useNotifications, NotificationItem };
+export { NotificationItem };

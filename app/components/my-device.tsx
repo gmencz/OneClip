@@ -1,4 +1,4 @@
-import { useDeviceIcon } from "../utils/device";
+import { useDeviceIcon } from "~/hooks/use-device-icon";
 
 type Props = {
   type: string;
