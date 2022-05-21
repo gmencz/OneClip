@@ -61,13 +61,27 @@ interface UseCopyToClipboardParams {
   setNotifications: React.Dispatch<Notification[]>;
 }
 
+export async function copyDataToClipboard(data: string) {
+  if (data.startsWith("data:image/png;base64")) {
+    const imageBlob = await fetch(data).then(res => res.blob());
+
+    navigator.clipboard.write([
+      new ClipboardItem({
+        "image/png": imageBlob
+      })
+    ]);
+  } else {
+    await navigator.clipboard.writeText(data);
+  }
+}
+
 export function useCopyToClipboard({
   notifications,
   setNotifications
 }: UseCopyToClipboardParams) {
   return async ({ from, text }: ClipboardData) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await copyDataToClipboard(text);
       toast.success(
         <span className="text-sm">
           Check your clipboard, {from.name} just shared their clipboard with

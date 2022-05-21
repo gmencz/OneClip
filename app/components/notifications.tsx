@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import type { Device } from "../utils/device";
 import { useDeviceIcon } from "../utils/device";
+import { copyDataToClipboard } from "~/utils/clipboard";
 
 export interface Notification {
   id: string;
@@ -74,7 +75,7 @@ function NotificationItem({ notification }: NotificationItemProps) {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(notification.text);
+      await copyDataToClipboard(notification.text);
       toast.success(
         <span className="text-sm">
           Copied {notification.from.name}'s clipboard

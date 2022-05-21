@@ -1,6 +1,7 @@
-import { Form, useSubmit } from "@remix-run/react";
+import { useSubmit } from "@remix-run/react";
 import toast from "react-hot-toast";
-import { Device, useDeviceIcon } from "../utils/device";
+import type { Device } from "../utils/device";
+import { useDeviceIcon } from "../utils/device";
 
 type Props = {
   device: Device;
@@ -16,8 +17,8 @@ export function DiscoveredDevice({ device, channel, myDevice }: Props) {
     <button
       onClick={async () => {
         try {
-          const text = await navigator.clipboard.readText();
-          if (!text) {
+          const [clipboardItem] = await navigator.clipboard.read();
+          if (!clipboardItem) {
             toast.error(
               <span className="text-sm">Your clipboard is empty</span>,
               {
@@ -28,20 +29,61 @@ export function DiscoveredDevice({ device, channel, myDevice }: Props) {
                 duration: 4000
               }
             );
+            return;
           }
 
-          const formData = new FormData();
-          formData.append("deviceName", device.name);
-          formData.append("channel", channel);
-          formData.append("fromName", myDevice.name);
-          formData.append("fromType", myDevice.type);
-          formData.append("text", text);
+          if (clipboardItem.types.includes("image/png")) {
+            const blob = await clipboardItem.getType("image/png");
+            const reader = new FileReader();
+            reader.onload = ev => {
+              const imageBase64 = ev.target?.result;
 
-          submit(formData, {
-            method: "post",
-            action: "/?index",
-            encType: "application/x-www-form-urlencoded"
-          });
+              if (!imageBase64) {
+                toast.error(
+                  <span className="text-sm">
+                    Something went wrong sharing your clipboard
+                  </span>,
+                  {
+                    style: {
+                      paddingLeft: "15px",
+                      paddingRight: 0
+                    },
+                    duration: 4000
+                  }
+                );
+                return;
+              }
+
+              const formData = new FormData();
+              formData.append("deviceName", device.name);
+              formData.append("channel", channel);
+              formData.append("fromName", myDevice.name);
+              formData.append("fromType", myDevice.type);
+              formData.append("text", ev.target.result as string);
+
+              submit(formData, {
+                method: "post",
+                action: "/?index",
+                encType: "application/x-www-form-urlencoded"
+              });
+            };
+
+            reader.readAsDataURL(blob);
+          } else {
+            const text = await navigator.clipboard.readText();
+            const formData = new FormData();
+            formData.append("deviceName", device.name);
+            formData.append("channel", channel);
+            formData.append("fromName", myDevice.name);
+            formData.append("fromType", myDevice.type);
+            formData.append("text", text);
+
+            submit(formData, {
+              method: "post",
+              action: "/?index",
+              encType: "application/x-www-form-urlencoded"
+            });
+          }
         } catch (error) {
           console.error(error);
           toast.error(
