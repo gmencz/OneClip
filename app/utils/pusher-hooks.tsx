@@ -1,4 +1,5 @@
-import Pusher, { Channel } from "pusher-js";
+import type { Channel } from "pusher-js";
+import type Pusher from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
 interface SubscriptionError {

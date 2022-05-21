@@ -1,30 +1,17 @@
-import toast from "react-hot-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Device } from "../utils/device";
+import { DeviceSubscriptions } from "../utils/device";
 import { useDevice } from "../utils/device";
 import { rest } from "../utils/pusher.server";
 import { commitSession, getSession } from "../utils/sessions";
 import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
-import {
-  MAX_NOTIFICATIONS,
-  useNotifications
-} from "../components/notifications";
-import { nanoid } from "nanoid";
-import { useCallback } from "react";
+import { useNotifications } from "../components/notifications";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useTransition } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { getClientIPAddress } from "remix-utils";
-
-interface PresenceChannel {
-  members: Record<string, Omit<Device, "name">>;
-}
-
-interface MemberData {
-  id: string;
-  info: Omit<Device, "name">;
-}
+import { ClipboardToasts } from "~/utils/clipboard";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -133,18 +120,13 @@ interface RouteData {
   allDevices?: string[];
 }
 
-interface ClipboardData {
-  from: Device;
-  text: string;
-}
-
 export default function Index() {
   const { ip, error, clipboardError, lastDeviceName, allDevices } =
     useLoaderData<RouteData>();
 
   const [devices, setDevices] = useState<Device[]>([]);
   const { notifications, setNotifications } = useNotifications();
-  const transition = useTransition();
+
   const myDevice = useDevice({
     ip,
     allDevices: allDevices ?? [],
@@ -158,149 +140,6 @@ export default function Index() {
       second: devices.slice(half)
     };
   }
-
-  useEffect(() => {
-    if (transition.submission) {
-      return;
-    }
-
-    if (clipboardError) {
-      console.error(clipboardError);
-      toast.error(<span className="text-sm">Failed to share clipboard</span>, {
-        style: {
-          paddingLeft: "15px",
-          paddingRight: 0
-        },
-        duration: 4000
-      });
-      return;
-    }
-
-    if (lastDeviceName) {
-      toast.success(
-        <span className="text-sm">Clipboard shared with {lastDeviceName}</span>,
-        {
-          style: {
-            paddingLeft: "15px",
-            paddingRight: 0
-          },
-          duration: 4000
-        }
-      );
-    }
-  }, [clipboardError, lastDeviceName, transition.submission]);
-
-  const copyToClipboard = useCallback(
-    async ({ from, text }: ClipboardData) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        toast.success(
-          <span className="text-sm">
-            Check your clipboard, {from.name} just shared their clipboard with
-            you!
-          </span>,
-          {
-            style: {
-              paddingLeft: "15px",
-              paddingRight: 0
-            },
-            duration: 4000
-          }
-        );
-      } catch (error) {
-        if (notifications.length < MAX_NOTIFICATIONS) {
-          setNotifications([
-            ...notifications,
-            {
-              id: nanoid(),
-              from: {
-                name: from.name,
-                type: from.type
-              },
-              text,
-              timestamp: new Date().toISOString()
-            }
-          ]);
-
-          return;
-        }
-
-        console.error(error);
-        toast.error(
-          <span className="text-sm">
-            {from.name} shared their clipboard with you but your notifications
-            folder is full so it couldn't be saved
-          </span>,
-          {
-            style: {
-              paddingLeft: "15px",
-              paddingRight: 0
-            },
-            duration: 4000
-          }
-        );
-      }
-    },
-    [notifications, setNotifications]
-  );
-
-  useEffect(() => {
-    if (!myDevice.selfChannel || !myDevice.networkChannel) {
-      return;
-    }
-
-    const joinNetwork = ({ members }: PresenceChannel) => {
-      setDevices(
-        Object.keys(members)
-          .filter(memberId => memberId !== myDevice?.info?.name)
-          .map(memberId => {
-            return {
-              name: memberId,
-              type: members[memberId].type
-            };
-          })
-      );
-    };
-
-    const someoneJoined = (member: MemberData) => {
-      setDevices(prevDevices => [
-        ...prevDevices,
-        { name: member.id, type: member.info.type }
-      ]);
-    };
-
-    const someoneLeft = (member: MemberData) => {
-      setDevices(prevDevices =>
-        prevDevices.filter(device => device.name !== member.id)
-      );
-    };
-
-    myDevice.selfChannel.bind("copy-to-clipboard", copyToClipboard);
-    myDevice.networkChannel.bind("pusher:subscription_succeeded", joinNetwork);
-    myDevice.networkChannel.bind("pusher:member_added", someoneJoined);
-    myDevice.networkChannel.bind("pusher:member_removed", someoneLeft);
-
-    return () => {
-      if (!myDevice.selfChannel || !myDevice.networkChannel) {
-        return;
-      }
-
-      myDevice.selfChannel.unbind("copy-to-clipboard", copyToClipboard);
-
-      myDevice.networkChannel.unbind(
-        "pusher:subscription_succeeded",
-        joinNetwork
-      );
-
-      myDevice.networkChannel.unbind("pusher:member_added", someoneJoined);
-      myDevice.networkChannel.unbind("pusher:member_removed", someoneLeft);
-    };
-  }, [
-    copyToClipboard,
-    myDevice?.info?.name,
-    myDevice.networkChannel,
-    myDevice.selfChannel
-  ]);
 
   if (myDevice.isFirefox) {
     return (
@@ -344,6 +183,24 @@ export default function Index() {
   }
 
   return (
-    <MainScreen ip={ip} devicesHalves={getDeviceHalves()} myDevice={myDevice} />
+    <>
+      <MainScreen
+        ip={ip}
+        devicesHalves={getDeviceHalves()}
+        myDevice={myDevice}
+      />
+
+      <ClipboardToasts
+        clipboardError={clipboardError}
+        lastDeviceName={lastDeviceName}
+      />
+
+      <DeviceSubscriptions
+        myDevice={myDevice}
+        notifications={notifications}
+        setDevices={setDevices}
+        setNotifications={setNotifications}
+      />
+    </>
   );
 }

@@ -1,9 +1,9 @@
-import {
-  json,
+import type {
   LinksFunction,
   LoaderFunction,
   MetaFunction
 } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -114,8 +114,6 @@ function Environment() {
 }
 
 function Body() {
-  const data = useLoaderData<RouteData>();
-
   return (
     <body>
       <NotificationsProvider>

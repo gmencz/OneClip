@@ -18,6 +18,8 @@ import {
 } from "react-device-detect";
 import { useSubscription } from "./pusher-hooks";
 import { snakeCase } from "./strings";
+import { useCopyToClipboard } from "./clipboard";
+import type { Notification } from "~/components/notifications";
 
 export type DeviceType =
   | "mobile"
@@ -165,11 +167,11 @@ function useDeviceIcon(type: string, size: "sm" | "lg" = "lg") {
   }
 }
 
-type DeviceParams = {
+interface DeviceParams {
   ip?: string;
   allDevices: string[];
   shouldConnect?: boolean;
-};
+}
 
 const defaultParams: DeviceParams = {
   ip: "",
@@ -178,11 +180,11 @@ const defaultParams: DeviceParams = {
 };
 
 function useDevice(params: DeviceParams = defaultParams) {
-  let [pusher, setPusher] = useState<Pusher>();
-  let isSupported = !isFirefox && !isIE;
-  let info = useDeviceInfo({ allDevices: params.allDevices });
-  let enabled = !!info && params.shouldConnect && isSupported;
-  let config = useMemo(() => {
+  const [pusher, setPusher] = useState<Pusher>();
+  const isSupported = !isFirefox && !isIE;
+  const info = useDeviceInfo({ allDevices: params.allDevices });
+  const enabled = !!info && params.shouldConnect && isSupported;
+  const config = useMemo(() => {
     if (!info) {
       return undefined;
     }
@@ -201,12 +203,12 @@ function useDevice(params: DeviceParams = defaultParams) {
     }
   }, [config, enabled, pusher]);
 
-  let selfSub = useSubscription(
+  const selfSub = useSubscription(
     pusher,
     `private-${snakeCase(info?.name ?? "")}-${params.ip}`
   );
 
-  let networkSub = useSubscription(pusher, `presence-${params.ip}`);
+  const networkSub = useSubscription(pusher, `presence-${params.ip}`);
 
   return {
     isFirefox,
@@ -219,6 +221,95 @@ function useDevice(params: DeviceParams = defaultParams) {
     selfChannel: selfSub.channel,
     networkChannel: networkSub.channel
   };
+}
+
+interface DeviceSubscriptionsProps {
+  myDevice: ReturnType<typeof useDevice>;
+  setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
+  notifications: Notification[];
+  setNotifications: React.Dispatch<Notification[]>;
+}
+
+interface PresenceChannel {
+  members: Record<string, Omit<Device, "name">>;
+}
+
+interface MemberData {
+  id: string;
+  info: Omit<Device, "name">;
+}
+
+export function DeviceSubscriptions({
+  myDevice,
+  setDevices,
+  notifications,
+  setNotifications
+}: DeviceSubscriptionsProps) {
+  const copyToClipboard = useCopyToClipboard({
+    notifications,
+    setNotifications
+  });
+
+  useEffect(() => {
+    if (!myDevice.selfChannel || !myDevice.networkChannel) {
+      return;
+    }
+
+    const joinNetwork = ({ members }: PresenceChannel) => {
+      setDevices(
+        Object.keys(members)
+          .filter(memberId => memberId !== myDevice?.info?.name)
+          .map(memberId => {
+            return {
+              name: memberId,
+              type: members[memberId].type
+            };
+          })
+      );
+    };
+
+    const someoneJoined = (member: MemberData) => {
+      setDevices(prevDevices => [
+        ...prevDevices,
+        { name: member.id, type: member.info.type }
+      ]);
+    };
+
+    const someoneLeft = (member: MemberData) => {
+      setDevices(prevDevices =>
+        prevDevices.filter(device => device.name !== member.id)
+      );
+    };
+
+    myDevice.selfChannel.bind("copy-to-clipboard", copyToClipboard);
+    myDevice.networkChannel.bind("pusher:subscription_succeeded", joinNetwork);
+    myDevice.networkChannel.bind("pusher:member_added", someoneJoined);
+    myDevice.networkChannel.bind("pusher:member_removed", someoneLeft);
+
+    return () => {
+      if (!myDevice.selfChannel || !myDevice.networkChannel) {
+        return;
+      }
+
+      myDevice.selfChannel.unbind("copy-to-clipboard", copyToClipboard);
+
+      myDevice.networkChannel.unbind(
+        "pusher:subscription_succeeded",
+        joinNetwork
+      );
+
+      myDevice.networkChannel.unbind("pusher:member_added", someoneJoined);
+      myDevice.networkChannel.unbind("pusher:member_removed", someoneLeft);
+    };
+  }, [
+    copyToClipboard,
+    myDevice?.info?.name,
+    myDevice.networkChannel,
+    myDevice.selfChannel,
+    setDevices
+  ]);
+
+  return null;
 }
 
 export { generateDeviceName, useDeviceIcon, useDevice };

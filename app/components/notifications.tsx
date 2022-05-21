@@ -5,9 +5,10 @@ import { useContext } from "react";
 import { ClipboardCopyIcon, TrashIcon } from "@heroicons/react/solid";
 import toast from "react-hot-toast";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
-import { Device, useDeviceIcon } from "../utils/device";
+import type { Device } from "../utils/device";
+import { useDeviceIcon } from "../utils/device";
 
-interface Notification {
+export interface Notification {
   id: string;
   from: Device;
   timestamp: string;
