@@ -1,39 +1,60 @@
-# Install dependencies only when needed
-FROM node:lts-alpine AS deps
+# base node image
+FROM node:16-bullseye-slim as base
 
-ARG REMIX_TOKEN
+# Install openssl for Prisma
+RUN apt-get update && apt-get install -y openssl
 
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-COPY .npmrc package.json package-lock.json ./
-RUN npm ci
+# Install all node_modules, including dev dependencies
+FROM base as deps
 
-# Rebuild the source code only when needed
-FROM node:lts-alpine AS builder
-
-ARG REMIX_TOKEN
-
-WORKDIR /app
-COPY . .
-COPY --from=deps /app/node_modules ./node_modules
-
-RUN npm run build:css && \
-  npm run build:remix && \
-  npm run build:server
-
-# Production image, copy all the files and run next
-FROM node:lts-alpine AS runner
-
+RUN mkdir /app
 WORKDIR /app
 
-ENV NODE_ENV production
+ADD package.json package-lock.json ./
+RUN npm install --production=false
 
-COPY --from=builder /app/server ./server/
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+# Setup production node_modules
+FROM base as production-deps
 
-EXPOSE 3000
+RUN mkdir /app
+WORKDIR /app
 
-CMD [ "node", "server/s-build/server/index.js" ]
+COPY --from=deps /app/node_modules /app/node_modules
+ADD package.json package-lock.json ./
+RUN npm prune --production
+
+# Build the app
+FROM base as build
+
+ENV NODE_ENV=production
+
+RUN mkdir /app
+WORKDIR /app
+
+COPY --from=deps /app/node_modules /app/node_modules
+
+# If we're using Prisma, uncomment to cache the prisma schema
+# ADD prisma .
+# RUN npx prisma generate
+
+ADD . .
+RUN npm run build
+
+# Finally, build the production image with minimal footprint
+FROM base
+
+ENV NODE_ENV=production
+
+RUN mkdir /app
+WORKDIR /app
+
+COPY --from=production-deps /app/node_modules /app/node_modules
+
+# Uncomment if using Prisma
+# COPY --from=build /app/node_modules/.prisma /app/node_modules/.prisma
+
+COPY --from=build /app/build /app/build
+COPY --from=build /app/public /app/public
+ADD . .
+
+CMD ["npm", "run", "start"]

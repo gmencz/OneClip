@@ -1,7 +1,6 @@
 node_modules
 
-.cache
-server/s-build
-public/build
+/.cache
+/build
+/public/build
 .env
-build

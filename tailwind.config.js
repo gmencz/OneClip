@@ -2,8 +2,7 @@ const defaultTheme = require("tailwindcss/defaultTheme");
 
 module.exports = {
   mode: "jit",
-  purge: ["./app/**/*.{js,jsx,ts,tsx}"],
-  darkMode: false, // or 'media' or 'class'
+  content: ["./app/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       gridTemplateColumns: {
@@ -17,6 +16,5 @@ module.exports = {
       }
     }
   },
-  variants: {},
   plugins: []
 };

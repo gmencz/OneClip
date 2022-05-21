@@ -1,16 +1,16 @@
 import { Device } from "../utils/device";
-import { snakeCase } from "../utils/words";
+import { snakeCase } from "../utils/strings";
 import { DiscoveredDevice } from "./discovered-device";
 import { MyDevice } from "./my-device";
 
-type Props = {
+interface Props {
   myDevice: Device;
   ip: string;
   devicesHalves: {
     first: Device[];
     second: Device[];
   };
-};
+}
 
 export function DevicesList({ devicesHalves, myDevice, ip }: Props) {
   return (

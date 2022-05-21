@@ -1,38 +1,35 @@
-import type { ReactNode } from "react";
-import type { UpdateState } from "use-local-storage-state/src/useLocalStorageStateBase";
-import { Device, useDeviceIcon } from "../utils/device";
+import type { Dispatch, ReactNode } from "react";
 import { createContext } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import { useContext } from "react";
 import { ClipboardCopyIcon, TrashIcon } from "@heroicons/react/solid";
 import toast from "react-hot-toast";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { Device, useDeviceIcon } from "../utils/device";
 
-type Notification = {
+interface Notification {
   id: string;
   from: Device;
   timestamp: string;
   text: string;
-};
+}
 
-type NotificationsStore = {
+interface NotificationsStore {
   notifications: Notification[];
-  setNotifications: UpdateState<Notification[]>;
-};
+  setNotifications: Dispatch<Notification[]>;
+}
 
-let NotificationsContext = createContext<NotificationsStore | null>(null);
+const NotificationsContext = createContext<NotificationsStore | null>(null);
 
-type Props = {
+interface Props {
   children: ReactNode;
-};
+}
 
 const localStorageKey = "notifications";
-
 function NotificationsProvider({ children }: Props) {
-  let [notifications, setNotifications] = useLocalStorageState<Notification[]>(
-    localStorageKey,
-    []
-  );
+  const [notifications, setNotifications] = useLocalStorageState<
+    Notification[]
+  >(localStorageKey, { defaultValue: [] });
 
   return (
     <NotificationsContext.Provider value={{ notifications, setNotifications }}>
@@ -42,8 +39,7 @@ function NotificationsProvider({ children }: Props) {
 }
 
 function useNotifications() {
-  let context = useContext(NotificationsContext);
-
+  const context = useContext(NotificationsContext);
   if (!context) {
     throw new Error(
       "useNotifications can only be used within a NotificationsProvider"
@@ -53,9 +49,9 @@ function useNotifications() {
   return context;
 }
 
-type NotificationItemProps = {
+interface NotificationItemProps {
   notification: Notification;
-};
+}
 
 function formatNotificationTimestamp(timestamp: string) {
   const date = parseISO(timestamp);
@@ -72,10 +68,10 @@ function formatNotificationTimestamp(timestamp: string) {
 export const MAX_NOTIFICATIONS = 10;
 
 function NotificationItem({ notification }: NotificationItemProps) {
-  let icon = useDeviceIcon(notification.from.type, "sm");
-  let { setNotifications } = useNotifications();
+  const icon = useDeviceIcon(notification.from.type, "sm");
+  const { notifications, setNotifications } = useNotifications();
 
-  let copyToClipboard = async () => {
+  const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(notification.text);
       toast.success(
@@ -107,10 +103,8 @@ function NotificationItem({ notification }: NotificationItemProps) {
     }
   };
 
-  let dismiss = () => {
-    setNotifications(notifications =>
-      notifications.filter(n => n.id !== notification.id)
-    );
+  const dismiss = () => {
+    setNotifications(notifications.filter(n => n.id !== notification.id));
   };
 
   return (

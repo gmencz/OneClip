@@ -1,37 +1,44 @@
-import { LinksFunction, useRouteData } from "remix";
-import { Meta, Links, Scripts, LiveReload } from "remix";
-import { Outlet } from "react-router-dom";
+import {
+  json,
+  LinksFunction,
+  LoaderFunction,
+  MetaFunction
+} from "@remix-run/node";
+import {
+  Links,
+  LiveReload,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData
+} from "@remix-run/react";
 import { Toaster } from "react-hot-toast";
-import styles from "./styles/app.css";
-import { Loader, Env } from "./types";
-import { getEnv } from "./utils/env";
-import { ErrorScreen } from "./components/error-screen";
-import { MetaFunction } from "@remix-run/react/routeModules";
 import { NotificationsProvider } from "./components/notifications";
+import styles from "./tailwind.css";
 
-type RouteData = {
-  env: Env;
+const getEnv = () => {
+  return {
+    PUBLIC_PUSHER_CLUSTER: process.env.PUBLIC_PUSHER_CLUSTER,
+    PUBLIC_PUSHER_KEY: process.env.PUBLIC_PUSHER_KEY
+  };
 };
 
+type Env = ReturnType<typeof getEnv>;
+
+interface RouteData {
+  ENV: Env;
+}
+
 declare global {
-  let env: Env;
-
-  namespace NodeJS {
-    interface Global {
-      env: Env;
-    }
-  }
-
   interface Window {
-    env: Env;
+    ENV: Env;
   }
 }
 
-export let links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: styles }];
-};
+export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
-export let meta: MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return {
     "theme-color": "#15E269",
     "color-scheme": "dark light",
@@ -59,84 +66,76 @@ export let meta: MetaFunction = () => {
   };
 };
 
-export let loader: Loader = () => {
-  let data = {
-    env: getEnv()
-  };
-
-  return data;
+export const loader: LoaderFunction = () => {
+  return json({
+    ENV: getEnv()
+  });
 };
 
-function EnvScript({ env }: { env: Env }) {
+function Head() {
+  return (
+    <head>
+      <noscript>OneClip requires JavaScript.</noscript>
+      <link
+        rel="apple-touch-icon"
+        sizes="180x180"
+        href="/apple-touch-icon.png"
+      />
+      <link
+        rel="icon"
+        type="image/png"
+        sizes="32x32"
+        href="/favicon-32x32.png"
+      />
+      <link
+        rel="icon"
+        type="image/png"
+        sizes="16x16"
+        href="/favicon-16x16.png"
+      />
+      <link rel="manifest" href="/site.webmanifest" />
+
+      <Meta />
+      <Links />
+    </head>
+  );
+}
+
+function Environment() {
+  const { ENV } = useLoaderData<RouteData>();
+
   return (
     <script
       dangerouslySetInnerHTML={{
-        __html: `window.env = ${JSON.stringify(env)}`
+        __html: `window.ENV = ${JSON.stringify(ENV)}`
       }}
     />
   );
 }
 
-function Document({ children }: { children: React.ReactNode }) {
-  let data = useRouteData<RouteData>();
+function Body() {
+  const data = useLoaderData<RouteData>();
 
   return (
-    <html lang="en">
-      <head>
-        <noscript>OneClip requires JavaScript.</noscript>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
-        <link rel="manifest" href="/site.webmanifest" />
-        <Meta />
-        <Links />
-      </head>
-      <body>
-        {children}
-
-        <Scripts />
-        <EnvScript env={data.env} />
-        {process.env.NODE_ENV === "development" && <LiveReload />}
-      </body>
-    </html>
-  );
-}
-
-export default function App() {
-  return (
-    <Document>
+    <body>
       <NotificationsProvider>
         <Outlet />
         <Toaster />
       </NotificationsProvider>
-    </Document>
+
+      <Environment />
+      <ScrollRestoration />
+      <Scripts />
+      <LiveReload />
+    </body>
   );
 }
 
-export function ErrorBoundary({ error }: { error: Error }) {
+export default function Root() {
   return (
-    <Document>
-      <ErrorScreen>
-        <p className="text-red-500 text-lg mt-auto">
-          Unexpected error: {error.message}
-        </p>
-      </ErrorScreen>
-    </Document>
+    <html lang="en">
+      <Head />
+      <Body />
+    </html>
   );
 }

@@ -17,9 +17,9 @@ import {
   isIE
 } from "react-device-detect";
 import { useSubscription } from "./pusher-hooks";
-import { snakeCase } from "./words";
+import { snakeCase } from "./strings";
 
-type DeviceType =
+export type DeviceType =
   | "mobile"
   | "tablet"
   | "desktop"
@@ -28,10 +28,10 @@ type DeviceType =
   | "console"
   | "unknown";
 
-type Device = {
+export interface Device {
   name: string;
   type: DeviceType;
-};
+}
 
 function generateDeviceName() {
   return uniqueNamesGenerator({
@@ -193,8 +193,8 @@ function useDevice(params: DeviceParams = defaultParams) {
   useEffect(() => {
     if (enabled && config && !pusher) {
       setPusher(
-        new Pusher(window.env.PUBLIC_PUSHER_KEY!, {
-          cluster: window.env.PUBLIC_PUSHER_CLUSTER,
+        new Pusher(window.ENV.PUBLIC_PUSHER_KEY!, {
+          cluster: window.ENV.PUBLIC_PUSHER_CLUSTER,
           ...config
         })
       );
@@ -221,4 +221,4 @@ function useDevice(params: DeviceParams = defaultParams) {
   };
 }
 
-export { Device, DeviceType, generateDeviceName, useDeviceIcon, useDevice };
+export { generateDeviceName, useDeviceIcon, useDevice };

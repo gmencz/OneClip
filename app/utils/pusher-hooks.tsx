@@ -1,20 +1,20 @@
 import Pusher, { Channel } from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
-type SubscriptionError = {
+interface SubscriptionError {
   type: string;
   error: string;
   status: number;
-};
+}
 
-type State = {
+interface State {
   status: "loading" | "success" | "error";
   error: string | null;
-};
+}
 
 function useSubscription(pusher: Pusher | undefined, channelName: string) {
-  let channel = useRef<Channel>();
-  let [state, setState] = useState<State>({
+  const channel = useRef<Channel>();
+  const [state, setState] = useState<State>({
     status: "loading",
     error: null
   });

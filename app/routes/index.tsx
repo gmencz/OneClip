@@ -1,10 +1,3 @@
-import {
-  json,
-  useRouteData,
-  redirect,
-  ActionFunction,
-  usePendingFormSubmit
-} from "remix";
 import toast from "react-hot-toast";
 import { useState, useEffect, useMemo } from "react";
 import { Device, useDevice } from "../utils/device";
@@ -12,36 +5,48 @@ import { rest } from "../utils/pusher.server";
 import { commitSession, getSession } from "../utils/sessions";
 import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
-import type { ClipboardData, Loader } from "../types";
 import {
   MAX_NOTIFICATIONS,
   useNotifications
 } from "../components/notifications";
 import { nanoid } from "nanoid";
 import { useCallback } from "react";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect
+} from "@remix-run/node";
+import { useLoaderData, useTransition } from "@remix-run/react";
+import { getClientIPAddress } from "remix-utils";
 
-type PresenceChannel = {
+interface PresenceChannel {
   members: Record<string, Omit<Device, "name">>;
-};
+}
 
-type MemberData = {
+interface MemberData {
   id: string;
   info: Omit<Device, "name">;
-};
+}
 
-export let loader: Loader = async ({ context, request }) => {
-  let session = await getSession(request.headers.get("Cookie"));
-  if (!context.ip) {
+export const loader: LoaderFunction = async ({ request }) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  const ipAddress =
+    process.env.NODE_ENV === "production"
+      ? getClientIPAddress(request.headers)
+      : "127.0.0.1";
+
+  if (!ipAddress) {
     return json(
-      { error: "failed to retrieve public IP address" },
+      { error: "Failed to retrieve IP address" },
       {
         status: 500
       }
     );
   }
 
-  let base64IP = Buffer.from(context.ip).toString("base64");
-  let response = await rest.get({
+  const base64IP = Buffer.from(ipAddress).toString("base64");
+  const response = await rest.get({
     path: `/channels/presence-${base64IP}/users`
   });
   if (!response.ok) {
@@ -53,8 +58,8 @@ export let loader: Loader = async ({ context, request }) => {
     );
   }
 
-  let body = await response.json();
-  let allDevices = (body.users as { id: string }[]).map(device => device.id);
+  const body = await response.json();
+  const allDevices = (body.users as { id: string }[]).map(device => device.id);
 
   if (allDevices.length >= 100) {
     return json(
@@ -80,18 +85,17 @@ export let loader: Loader = async ({ context, request }) => {
   );
 };
 
-export let action: ActionFunction = async ({ request }) => {
-  let session = await getSession(request.headers.get("Cookie"));
-  let body = new URLSearchParams(await request.text());
-  let fromName = body.get("fromName");
-  let fromType = body.get("fromType");
-  let deviceChannel = body.get("channel");
-  let text = body.get("text");
-  let deviceName = body.get("deviceName");
+export const action: ActionFunction = async ({ request }) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  const body = new URLSearchParams(await request.text());
+  const fromName = body.get("fromName");
+  const fromType = body.get("fromType");
+  const deviceChannel = body.get("channel");
+  const text = body.get("text");
+  const deviceName = body.get("deviceName");
 
   if (!deviceChannel || !fromName || !fromType || !text || !deviceName) {
     session.flash("clipboardError", "Invalid payload");
-
     return redirect("/", {
       headers: {
         "Set-Cookie": await commitSession(session)
@@ -109,7 +113,6 @@ export let action: ActionFunction = async ({ request }) => {
 
   if (!response.ok) {
     session.flash("clipboardError", "Invalid event");
-
     return redirect("/", {
       headers: {
         "Set-Cookie": await commitSession(session)
@@ -125,29 +128,34 @@ export let action: ActionFunction = async ({ request }) => {
   });
 };
 
-type RouteData = {
+interface RouteData {
   ip?: string;
   clipboardError?: string;
   error?: string;
   lastDeviceName?: string;
   allDevices?: string[];
-};
+}
+
+interface ClipboardData {
+  from: Device;
+  text: string;
+}
 
 export default function Index() {
-  let { ip, error, clipboardError, lastDeviceName, allDevices } =
-    useRouteData<RouteData>();
+  const { ip, error, clipboardError, lastDeviceName, allDevices } =
+    useLoaderData<RouteData>();
 
-  let { notifications, setNotifications } = useNotifications();
-  let [devices, setDevices] = useState<Device[]>([]);
-  let pendingSubmit = usePendingFormSubmit();
-  let myDevice = useDevice({
+  const [devices, setDevices] = useState<Device[]>([]);
+  const { notifications, setNotifications } = useNotifications();
+  const transition = useTransition();
+  const myDevice = useDevice({
     ip,
     allDevices: allDevices ?? [],
     shouldConnect: !!ip
   });
 
-  let devicesHalves = useMemo(() => {
-    let half = Math.ceil(devices.length / 2);
+  const devicesHalves = useMemo(() => {
+    const half = Math.ceil(devices.length / 2);
     return {
       first: devices.slice(0, half),
       second: devices.slice(half)
@@ -155,7 +163,7 @@ export default function Index() {
   }, [devices]);
 
   useEffect(() => {
-    if (pendingSubmit) {
+    if (transition.submission) {
       return;
     }
 
@@ -183,9 +191,9 @@ export default function Index() {
         }
       );
     }
-  }, [clipboardError, lastDeviceName, pendingSubmit]);
+  }, [clipboardError, lastDeviceName, transition.submission]);
 
-  let copyToClipboard = useCallback(
+  const copyToClipboard = useCallback(
     async ({ from, text }: ClipboardData) => {
       try {
         await navigator.clipboard.writeText(text);
@@ -204,8 +212,8 @@ export default function Index() {
         );
       } catch (error) {
         if (notifications.length < MAX_NOTIFICATIONS) {
-          setNotifications(currentNotifications => [
-            ...currentNotifications,
+          setNotifications([
+            ...notifications,
             {
               id: nanoid(),
               from: {
@@ -239,7 +247,7 @@ export default function Index() {
     [notifications.length, setNotifications]
   );
 
-  let joinNetwork = useCallback(
+  const joinNetwork = useCallback(
     ({ members }: PresenceChannel) => {
       setDevices(
         Object.keys(members)
@@ -255,14 +263,14 @@ export default function Index() {
     [myDevice?.info?.name]
   );
 
-  let someoneJoined = useCallback((member: MemberData) => {
+  const someoneJoined = useCallback((member: MemberData) => {
     setDevices(prevDevices => [
       ...prevDevices,
       { name: member.id, type: member.info.type }
     ]);
   }, []);
 
-  let someoneLeft = useCallback((member: MemberData) => {
+  const someoneLeft = useCallback((member: MemberData) => {
     setDevices(prevDevices =>
       prevDevices.filter(device => device.name !== member.id)
     );
