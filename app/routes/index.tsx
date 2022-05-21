@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
-import { useState, useEffect, useMemo } from "react";
-import { Device, useDevice } from "../utils/device";
+import { useState, useEffect } from "react";
+import type { Device } from "../utils/device";
+import { useDevice } from "../utils/device";
 import { rest } from "../utils/pusher.server";
 import { commitSession, getSession } from "../utils/sessions";
 import { MainScreen } from "../components/main-screen";
@@ -11,12 +12,8 @@ import {
 } from "../components/notifications";
 import { nanoid } from "nanoid";
 import { useCallback } from "react";
-import {
-  ActionFunction,
-  json,
-  LoaderFunction,
-  redirect
-} from "@remix-run/node";
+import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useTransition } from "@remix-run/react";
 import { getClientIPAddress } from "remix-utils";
 
@@ -154,13 +151,13 @@ export default function Index() {
     shouldConnect: !!ip
   });
 
-  const devicesHalves = useMemo(() => {
+  function getDeviceHalves() {
     const half = Math.ceil(devices.length / 2);
     return {
       first: devices.slice(0, half),
       second: devices.slice(half)
     };
-  }, [devices]);
+  }
 
   useEffect(() => {
     if (transition.submission) {
@@ -244,11 +241,15 @@ export default function Index() {
         );
       }
     },
-    [notifications.length, setNotifications]
+    [notifications, setNotifications]
   );
 
-  const joinNetwork = useCallback(
-    ({ members }: PresenceChannel) => {
+  useEffect(() => {
+    if (!myDevice.selfChannel || !myDevice.networkChannel) {
+      return;
+    }
+
+    const joinNetwork = ({ members }: PresenceChannel) => {
       setDevices(
         Object.keys(members)
           .filter(memberId => memberId !== myDevice?.info?.name)
@@ -259,27 +260,20 @@ export default function Index() {
             };
           })
       );
-    },
-    [myDevice?.info?.name]
-  );
+    };
 
-  const someoneJoined = useCallback((member: MemberData) => {
-    setDevices(prevDevices => [
-      ...prevDevices,
-      { name: member.id, type: member.info.type }
-    ]);
-  }, []);
+    const someoneJoined = (member: MemberData) => {
+      setDevices(prevDevices => [
+        ...prevDevices,
+        { name: member.id, type: member.info.type }
+      ]);
+    };
 
-  const someoneLeft = useCallback((member: MemberData) => {
-    setDevices(prevDevices =>
-      prevDevices.filter(device => device.name !== member.id)
-    );
-  }, []);
-
-  useEffect(() => {
-    if (!myDevice.selfChannel || !myDevice.networkChannel) {
-      return;
-    }
+    const someoneLeft = (member: MemberData) => {
+      setDevices(prevDevices =>
+        prevDevices.filter(device => device.name !== member.id)
+      );
+    };
 
     myDevice.selfChannel.bind("copy-to-clipboard", copyToClipboard);
     myDevice.networkChannel.bind("pusher:subscription_succeeded", joinNetwork);
@@ -292,20 +286,20 @@ export default function Index() {
       }
 
       myDevice.selfChannel.unbind("copy-to-clipboard", copyToClipboard);
+
       myDevice.networkChannel.unbind(
         "pusher:subscription_succeeded",
         joinNetwork
       );
+
       myDevice.networkChannel.unbind("pusher:member_added", someoneJoined);
       myDevice.networkChannel.unbind("pusher:member_removed", someoneLeft);
     };
   }, [
     copyToClipboard,
-    joinNetwork,
+    myDevice?.info?.name,
     myDevice.networkChannel,
-    myDevice.selfChannel,
-    someoneJoined,
-    someoneLeft
+    myDevice.selfChannel
   ]);
 
   if (myDevice.isFirefox) {
@@ -350,6 +344,6 @@ export default function Index() {
   }
 
   return (
-    <MainScreen ip={ip} devicesHalves={devicesHalves} myDevice={myDevice} />
+    <MainScreen ip={ip} devicesHalves={getDeviceHalves()} myDevice={myDevice} />
   );
 }
