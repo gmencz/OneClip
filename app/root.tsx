@@ -14,7 +14,7 @@ import {
   useLoaderData
 } from "@remix-run/react";
 import { Toaster } from "react-hot-toast";
-import { NotificationsProvider } from "./components/notifications";
+import { NotificationsProvider } from "./components/notifications-provider";
 import styles from "./tailwind.css";
 
 const getEnv = () => {

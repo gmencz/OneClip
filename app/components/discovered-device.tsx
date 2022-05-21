@@ -13,93 +13,66 @@ function DiscoveredDevice({ device, channel, myDevice }: Props) {
   const icon = useDeviceIcon(device.type);
   const submit = useSubmit();
 
+  const shareClipboard = async () => {
+    try {
+      const [clipboardItem] = await navigator.clipboard.read();
+      if (!clipboardItem) {
+        toast.error(<span className="text-sm">Your clipboard is empty</span>, {
+          style: {
+            paddingLeft: "15px",
+            paddingRight: 0
+          },
+          duration: 4000
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("deviceName", device.name);
+      formData.append("channel", channel);
+      formData.append("fromName", myDevice.name);
+      formData.append("fromType", myDevice.type);
+
+      if (clipboardItem.types.includes("image/png")) {
+        const blob = await clipboardItem.getType("image/png");
+        const body = new FormData();
+        body.append("image", blob);
+        const data = await fetch("/api/images", { method: "POST", body }).then(
+          res => res.json()
+        );
+
+        const { imageId } = data;
+        formData.append("text", `__ONECLIP_IMG__:${imageId}`);
+      } else {
+        const text = await navigator.clipboard.readText();
+        formData.append("text", `__ONECLIP_TEXT__:${text}`);
+      }
+
+      submit(formData, {
+        method: "post",
+        action: "/?index",
+        encType: "application/x-www-form-urlencoded"
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        <span className="text-sm">
+          Something went wrong sharing your clipboard
+        </span>,
+        {
+          style: {
+            paddingLeft: "15px",
+            paddingRight: 0
+          },
+          duration: 4000
+        }
+      );
+    }
+  };
+
   return (
     <button
-      onClick={async () => {
-        try {
-          const [clipboardItem] = await navigator.clipboard.read();
-          if (!clipboardItem) {
-            toast.error(
-              <span className="text-sm">Your clipboard is empty</span>,
-              {
-                style: {
-                  paddingLeft: "15px",
-                  paddingRight: 0
-                },
-                duration: 4000
-              }
-            );
-            return;
-          }
-
-          if (clipboardItem.types.includes("image/png")) {
-            const blob = await clipboardItem.getType("image/png");
-            const reader = new FileReader();
-            reader.onload = ev => {
-              const imageBase64 = ev.target?.result;
-
-              if (!imageBase64) {
-                toast.error(
-                  <span className="text-sm">
-                    Something went wrong sharing your clipboard
-                  </span>,
-                  {
-                    style: {
-                      paddingLeft: "15px",
-                      paddingRight: 0
-                    },
-                    duration: 4000
-                  }
-                );
-                return;
-              }
-
-              const formData = new FormData();
-              formData.append("deviceName", device.name);
-              formData.append("channel", channel);
-              formData.append("fromName", myDevice.name);
-              formData.append("fromType", myDevice.type);
-              formData.append("text", ev.target.result as string);
-
-              submit(formData, {
-                method: "post",
-                action: "/?index",
-                encType: "application/x-www-form-urlencoded"
-              });
-            };
-
-            reader.readAsDataURL(blob);
-          } else {
-            const text = await navigator.clipboard.readText();
-            const formData = new FormData();
-            formData.append("deviceName", device.name);
-            formData.append("channel", channel);
-            formData.append("fromName", myDevice.name);
-            formData.append("fromType", myDevice.type);
-            formData.append("text", text);
-
-            submit(formData, {
-              method: "post",
-              action: "/?index",
-              encType: "application/x-www-form-urlencoded"
-            });
-          }
-        } catch (error) {
-          console.error(error);
-          toast.error(
-            <span className="text-sm">
-              Something went wrong reading your clipboard
-            </span>,
-            {
-              style: {
-                paddingLeft: "15px",
-                paddingRight: 0
-              },
-              duration: 4000
-            }
-          );
-        }
-      }}
+      onClick={shareClipboard}
       className="w-[5.35rem] h-[5.35rem] rounded-full bg-brand flex items-center justify-center text-white relative hover:bg-opacity-80 focus:outline-none focus:ring focus:ring-white"
     >
       {icon}

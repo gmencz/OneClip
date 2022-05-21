@@ -35,6 +35,7 @@ function useDevice(params: DeviceParams = defaultParams) {
       setPusher(
         new Pusher(window.ENV.PUBLIC_PUSHER_KEY!, {
           cluster: window.ENV.PUBLIC_PUSHER_CLUSTER,
+          authEndpoint: "/api/pusher/auth",
           ...config
         })
       );
