@@ -1,5 +1,6 @@
 import { useSubmit } from "@remix-run/react";
 import toast from "react-hot-toast";
+import { IMG_PREFIX, TEXT_PREFIX } from "~/constants";
 import { useDeviceIcon } from "~/hooks/use-device-icon";
 import type { Device } from "~/types";
 
@@ -42,10 +43,10 @@ function DiscoveredDevice({ device, channel, myDevice }: Props) {
         );
 
         const { imageId } = data;
-        formData.append("text", `__ONECLIP_IMG__:${imageId}`);
+        formData.append("text", `${IMG_PREFIX}:${imageId}`);
       } else {
         const text = await navigator.clipboard.readText();
-        formData.append("text", `__ONECLIP_TEXT__:${text}`);
+        formData.append("text", `${TEXT_PREFIX}:${text}`);
       }
 
       submit(formData, {

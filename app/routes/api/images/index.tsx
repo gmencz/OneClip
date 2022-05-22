@@ -13,7 +13,7 @@ class WritableFileStream extends Writable {
 
   _write(
     chunk: any,
-    encoding: BufferEncoding,
+    _encoding: BufferEncoding,
     callback: (error?: Error | null) => void
   ): void {
     this.chunks.push(chunk);
@@ -50,14 +50,17 @@ async function uploadImageToRedis(data: AsyncIterable<Uint8Array>) {
   });
 
   const imageId = `img-${nanoid()}`;
-  await redis.set(imageId, compressedBuf);
-  await redis.del(imageId);
+  await redis.set(imageId, compressedBuf, "EX", 86400); // Expires in 24 hours.
   return imageId;
 }
 
 export const action: ActionFunction = async ({ request }) => {
+  if (request.method !== "POST") {
+    return json({ message: "Method not allowed" }, { status: 405 });
+  }
+
   const uploadHandler = unstable_composeUploadHandlers(
-    async ({ name, contentType, data, filename }) => {
+    async ({ name, data }) => {
       if (name !== "image") {
         return undefined;
       }

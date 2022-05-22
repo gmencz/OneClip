@@ -1,3 +1,4 @@
-const MAX_NOTIFICATIONS = 10;
+const TEXT_PREFIX = "__ONECLIP_TEXT__";
+const IMG_PREFIX = "__ONECLIP_IMG__";
 
-export { MAX_NOTIFICATIONS };
+export { TEXT_PREFIX, IMG_PREFIX };

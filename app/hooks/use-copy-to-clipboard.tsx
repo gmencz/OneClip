@@ -1,31 +1,25 @@
-import type { Device, Notification } from "~/types";
+import { IMG_PREFIX } from "~/constants";
 
-interface UseCopyToClipboardParams {
-  notifications: Notification[];
-  setNotifications: React.Dispatch<Notification[]>;
-}
+function useCopyToClipboard() {
+  return async (text: string) => {
+    // We have to figure out if the other device wants to share an image or plain text first.
+    const [prefix, ...data] = text.split(":");
+    if (prefix === IMG_PREFIX) {
+      const imageId = data.join("");
+      const imageBlob = await fetch(`/api/images/${imageId}`).then(r =>
+        r.blob()
+      );
 
-export interface ClipboardData {
-  from: Device;
-  text: string;
-}
-
-function useCopyToClipboard({
-  notifications,
-  setNotifications
-}: UseCopyToClipboardParams) {
-  return async ({ from, text }: ClipboardData) => {
-    if (text.startsWith("data:image/png;base64")) {
-      const imageBlob = await fetch(text).then(res => res.blob());
-
-      navigator.clipboard.write([
+      await navigator.clipboard.write([
         new ClipboardItem({
           "image/png": imageBlob
         })
       ]);
-    } else {
-      await navigator.clipboard.writeText(text);
+
+      return;
     }
+
+    await navigator.clipboard.writeText(data.join(""));
   };
 }
 

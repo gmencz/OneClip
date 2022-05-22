@@ -6,7 +6,6 @@ import {
 } from "@heroicons/react/solid";
 import { useMemo } from "react";
 import { Fragment, useState } from "react";
-import { MAX_NOTIFICATIONS } from "~/constants";
 import { useNotifications } from "~/hooks/use-notifications";
 import { NotificationItem } from "./notification-item";
 
@@ -161,24 +160,6 @@ export function Header() {
                             ))}
                           </ul>
                         </div>
-
-                        {notifications.length >= MAX_NOTIFICATIONS ? (
-                          <div className="mt-5 pt-4 text-sm text-gray-300">
-                            <p>
-                              Your notifications folder is full so you won't
-                              receive any new notifications until you delete
-                              something.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="mt-5 pt-4 text-sm text-gray-300">
-                            <p>
-                              You can store{" "}
-                              {MAX_NOTIFICATIONS - notifications.length}{" "}
-                              notifications more before your folder is full.
-                            </p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>

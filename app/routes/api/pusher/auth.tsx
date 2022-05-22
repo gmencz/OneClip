@@ -58,6 +58,7 @@ export const action: ActionFunction = async ({ request }) => {
         }
       });
     } catch (error) {
+      console.error(error);
       if (error instanceof Error) {
         return json({ error: error.message }, { status: 500 });
       }

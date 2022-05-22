@@ -1,11 +1,9 @@
 import { useEffect } from "react";
 import type { useDevice } from "~/hooks/use-device";
 import type { Device, Notification } from "~/types";
-import type { ClipboardData } from "~/hooks/use-copy-to-clipboard";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { nanoid } from "nanoid";
 import toast from "react-hot-toast";
-import { MAX_NOTIFICATIONS } from "~/constants";
 
 interface DeviceSubscriptionsProps {
   myDevice: ReturnType<typeof useDevice>;
@@ -23,16 +21,18 @@ interface MemberData {
   info: Omit<Device, "name">;
 }
 
+interface ClipboardData {
+  from: Device;
+  text: string;
+}
+
 function DeviceSubscriptions({
   myDevice,
   setDevices,
   notifications,
   setNotifications
 }: DeviceSubscriptionsProps) {
-  const copyToClipboard = useCopyToClipboard({
-    notifications,
-    setNotifications
-  });
+  const copyToClipboard = useCopyToClipboard();
 
   useEffect(() => {
     if (!myDevice.selfChannel || !myDevice.networkChannel) {
@@ -67,7 +67,7 @@ function DeviceSubscriptions({
 
     const onCopyToClipboard = async ({ from, text }: ClipboardData) => {
       try {
-        await copyToClipboard({ from, text });
+        await copyToClipboard(text);
         toast.success(
           <span className="text-sm">
             Check your clipboard, {from.name} just shared their clipboard with
@@ -82,26 +82,22 @@ function DeviceSubscriptions({
           }
         );
       } catch (error) {
+        console.error(error);
+
         // If the error was caused because the user didn't have the site focused, we save it as a notification.
         if (error instanceof DOMException && error.code === 0) {
-          const updatedNotifications = [...notifications];
-
-          // If we are at our limit of notifications, we will remove the oldest one and add this one.
-          if (notifications.length >= MAX_NOTIFICATIONS) {
-            updatedNotifications.pop();
-          }
-
-          updatedNotifications.unshift({
-            id: nanoid(),
-            from: {
-              name: from.name,
-              type: from.type
+          setNotifications([
+            {
+              id: nanoid(),
+              from: {
+                name: from.name,
+                type: from.type
+              },
+              text,
+              timestamp: new Date().toISOString()
             },
-            text,
-            timestamp: new Date().toISOString()
-          });
-
-          setNotifications(updatedNotifications);
+            ...notifications
+          ]);
         }
       }
     };

@@ -25,17 +25,11 @@ function formatNotificationTimestamp(timestamp: string) {
 function NotificationItem({ notification }: NotificationItemProps) {
   const icon = useDeviceIcon(notification.from.type, "sm");
   const { notifications, setNotifications } = useNotifications();
-  const copyToClipboard = useCopyToClipboard({
-    notifications,
-    setNotifications
-  });
+  const copyToClipboard = useCopyToClipboard();
 
   const onClickCopy = async () => {
     try {
-      await copyToClipboard({
-        from: notification.from,
-        text: notification.text
-      });
+      await copyToClipboard(notification.text);
       toast.success(
         <span className="text-sm">
           Copied {notification.from.name}'s clipboard
@@ -49,6 +43,7 @@ function NotificationItem({ notification }: NotificationItemProps) {
         }
       );
     } catch (error) {
+      console.error(error);
       toast.error(
         <span className="text-sm">
           Something went wrong copying {notification.from.name}'s clipboard

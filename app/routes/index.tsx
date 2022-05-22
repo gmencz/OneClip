@@ -4,8 +4,8 @@ import { commitSession, getSession } from "../utils/sessions";
 import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import { getClientIPAddress } from "remix-utils";
 import { ClipboardToasts } from "~/components/clipboard-toasts";
 import { DeviceSubscriptions } from "~/components/device-subscriptions";
@@ -22,7 +22,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   if (!ipAddress) {
     return json(
-      { error: "Failed to retrieve IP address" },
+      { error: "Internal Server Error" },
       {
         status: 500
       }
@@ -35,7 +35,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
   if (!response.ok) {
     return json(
-      { error: "server error" },
+      { error: "Internal Server Error" },
       {
         status: 500
       }
@@ -47,7 +47,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   if (allDevices.length >= 100) {
     return json(
-      { error: "network is full, try again later" },
+      { error: "Network is full, try again later" },
       {
         status: 500
       }
@@ -57,8 +57,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   return json(
     {
       ip: base64IP,
-      clipboardError: session.get("clipboardError"),
-      lastDeviceName: session.get("lastDeviceName"),
       allDevices
     },
     {
@@ -70,7 +68,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
   const body = new URLSearchParams(await request.text());
   const fromName = body.get("fromName");
   const fromType = body.get("fromType");
@@ -79,50 +76,61 @@ export const action: ActionFunction = async ({ request }) => {
   const deviceName = body.get("deviceName");
 
   if (!deviceChannel || !fromName || !fromType || !text || !deviceName) {
-    session.flash("clipboardError", "Invalid payload");
-    return redirect("/", {
-      headers: {
-        "Set-Cookie": await commitSession(session)
-      }
-    });
+    return json(
+      {
+        clipboardError: "Invalid payload"
+      },
+      { status: 400 }
+    );
   }
 
-  const response = await rest.trigger(deviceChannel, "copy-to-clipboard", {
-    from: {
-      name: fromName,
-      type: fromType
-    },
-    text
-  });
+  let response;
+
+  try {
+    response = await rest.trigger(deviceChannel, "copy-to-clipboard", {
+      from: {
+        name: fromName,
+        type: fromType
+      },
+      text
+    });
+  } catch (error) {
+    return json(
+      {
+        clipboardError: "Internal Server Error"
+      },
+      { status: 500 }
+    );
+  }
 
   if (!response.ok) {
-    session.flash("clipboardError", "Invalid event");
-    return redirect("/", {
-      headers: {
-        "Set-Cookie": await commitSession(session)
-      }
-    });
+    return json(
+      {
+        clipboardError: "Internal Server Error"
+      },
+      { status: 500 }
+    );
   }
 
-  session.flash("lastDeviceName", deviceName);
-  return redirect("/", {
-    headers: {
-      "Set-Cookie": await commitSession(session)
-    }
-  });
+  return json({ lastDeviceName: deviceName });
 };
 
-interface RouteData {
+interface LoaderData {
   ip?: string;
   clipboardError?: string;
   error?: string;
-  lastDeviceName?: string;
+
   allDevices?: string[];
 }
 
+interface ActionData {
+  clipboardError?: string;
+  lastDeviceName?: string;
+}
+
 export default function Index() {
-  const { ip, error, clipboardError, lastDeviceName, allDevices } =
-    useLoaderData<RouteData>();
+  const { ip, error, allDevices } = useLoaderData<LoaderData>();
+  const actionData = useActionData<ActionData>();
 
   const [devices, setDevices] = useState<Device[]>([]);
   const { notifications, setNotifications } = useNotifications();
@@ -191,8 +199,8 @@ export default function Index() {
       />
 
       <ClipboardToasts
-        clipboardError={clipboardError}
-        lastDeviceName={lastDeviceName}
+        clipboardError={actionData?.clipboardError}
+        lastDeviceName={actionData?.lastDeviceName}
       />
 
       <DeviceSubscriptions

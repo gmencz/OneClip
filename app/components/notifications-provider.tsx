@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import useLocalStorageState from "use-local-storage-state";
+import { useState } from "react";
 import { NotificationsContext } from "~/hooks/use-notifications";
 import type { Notification } from "~/types";
 
@@ -7,11 +7,8 @@ interface Props {
   children: ReactNode;
 }
 
-const localStorageKey = "notifications";
 function NotificationsProvider({ children }: Props) {
-  const [notifications, setNotifications] = useLocalStorageState<
-    Notification[]
-  >(localStorageKey, { defaultValue: [] });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   return (
     <NotificationsContext.Provider value={{ notifications, setNotifications }}>
