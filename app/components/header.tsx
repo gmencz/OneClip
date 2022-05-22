@@ -49,18 +49,6 @@ export function Header() {
           ) : null}
         </button>
 
-        <a href="https://www.paypal.me/gabrmendez" title="Donate">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6 text-gray-200 hover:text-white"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm1 16.947v1.053h-1v-.998c-1.035-.018-2.106-.265-3-.727l.455-1.644c.956.371 2.229.765 3.225.54 1.149-.26 1.384-1.442.114-2.011-.931-.434-3.778-.805-3.778-3.243 0-1.363 1.039-2.583 2.984-2.85v-1.067h1v1.018c.724.019 1.536.145 2.442.42l-.362 1.647c-.768-.27-1.617-.515-2.443-.465-1.489.087-1.62 1.376-.581 1.916 1.712.805 3.944 1.402 3.944 3.547.002 1.718-1.343 2.632-3 2.864z" />
-          </svg>
-          <span className="sr-only">Donate</span>
-        </a>
-
         <a href="https://github.com/gmencz/OneClip" title="GitHub">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -238,8 +226,7 @@ export function Header() {
 
                       <p className="mt-4">
                         When we talk about nearby devices, we're referring to
-                        devices in the same network, this is what makes OneClip
-                        secure.
+                        devices in the same network.
                       </p>
 
                       <div className="mt-4 rounded-md bg-gray-800 p-4">

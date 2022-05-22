@@ -14,6 +14,7 @@ import { useDeviceInfo } from "~/hooks/use-device-info";
 import { Connecting } from "~/components/connecting";
 import { isFirefox, isIE } from "react-device-detect";
 import { useIsPusherReady } from "~/hooks/use-is-pusher-ready";
+import { PremiumAnnouncement } from "~/components/premium-announcement";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));

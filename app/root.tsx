@@ -17,6 +17,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import { Header } from "./components/header";
 import { NotificationsProvider } from "./components/notifications-provider";
+import { PremiumAnnouncement } from "./components/premium-announcement";
 import styles from "./tailwind.css";
 
 const getEnv = () => {
@@ -129,7 +130,9 @@ function App() {
         authEndpoint="/api/pusher/auth"
       >
         <div className="h-full bg-gray-900 relative flex flex-col">
+          <PremiumAnnouncement />
           <Header />
+
           <Outlet />
           <Toaster />
         </div>
