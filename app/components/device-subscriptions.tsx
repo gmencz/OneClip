@@ -1,20 +1,17 @@
-import { useEffect } from "react";
-import type { useDevice } from "~/hooks/use-device";
-import type { Device, Notification } from "~/types";
+import type { PresenceChannelState } from "@harelpls/use-pusher";
+import { useChannel, useEvent } from "@harelpls/use-pusher";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
-import { nanoid } from "nanoid";
-import toast from "react-hot-toast";
+import { snakeCase } from "~/utils/strings";
+import type { Device } from "~/types";
 import { IMG_PREFIX } from "~/constants";
+import toast from "react-hot-toast";
+import { useNotifications } from "~/hooks/use-notifications";
+import { nanoid } from "nanoid";
 
 interface DeviceSubscriptionsProps {
-  myDevice: ReturnType<typeof useDevice>;
   setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
-  notifications: Notification[];
-  setNotifications: React.Dispatch<Notification[]>;
-}
-
-interface PresenceChannel {
-  members: Record<string, Omit<Device, "name">>;
+  deviceInfo: Device;
+  ip: string;
 }
 
 interface MemberData {
@@ -28,54 +25,77 @@ interface ClipboardData {
 }
 
 function DeviceSubscriptions({
-  myDevice,
   setDevices,
-  notifications,
-  setNotifications
+  deviceInfo,
+  ip
 }: DeviceSubscriptionsProps) {
   const copyToClipboard = useCopyToClipboard();
+  const { notifications, setNotifications } = useNotifications();
+  const myChannel = useChannel(`private-${snakeCase(deviceInfo.name)}-${ip}`);
+  const networkChannel = useChannel(`presence-${ip}`);
 
-  useEffect(() => {
-    if (!myDevice.selfChannel || !myDevice.networkChannel) {
-      return;
-    }
+  const onSubscribeToNetworkChannel = (
+    data: PresenceChannelState | undefined
+  ) => {
+    if (!data) return;
 
-    const onJoinNetwork = ({ members }: PresenceChannel) => {
-      const membersOtherThanSelf = Object.keys(members)
-        .filter(memberId => memberId !== myDevice?.info?.name)
-        .map(memberId => {
-          return {
-            name: memberId,
-            type: members[memberId].type
-          };
-        });
+    const { myID, members: allMembers } = data;
 
-      setDevices(membersOtherThanSelf);
-    };
+    const otherMembers: Device[] = Object.keys(allMembers)
+      .filter(id => id !== myID)
+      .map(id => {
+        return {
+          name: id,
+          type: allMembers[id].type
+        };
+      });
 
-    const onSomeoneJoined = (member: MemberData) => {
-      setDevices(currentDevices => [
-        ...currentDevices,
-        { name: member.id, type: member.info.type }
-      ]);
-    };
+    setDevices(otherMembers);
+  };
 
-    const onSomeoneLeft = (member: MemberData) => {
-      setDevices(currentDevices =>
-        currentDevices.filter(device => device.name !== member.id)
+  const onCopyToClipboard = async (data: ClipboardData | undefined) => {
+    if (!data) return;
+
+    const { from, text } = data;
+
+    try {
+      await copyToClipboard(text);
+      const [notificationPrefix] = text.split(":");
+      const isImageNotification = notificationPrefix === IMG_PREFIX;
+      toast.success(
+        <span className="text-sm">
+          Check your clipboard, {from.name} just shared their clipboard{" "}
+          {isImageNotification ? "image" : "text"} with you!
+        </span>,
+        {
+          style: {
+            paddingLeft: "15px",
+            paddingRight: 0
+          },
+          duration: 4000
+        }
       );
-    };
+    } catch (error) {
+      console.error(error);
 
-    const onCopyToClipboard = async ({ from, text }: ClipboardData) => {
-      try {
-        await copyToClipboard(text);
-        const [notificationPrefix] = text.split(":");
-        const isImageNotification = notificationPrefix === IMG_PREFIX;
-
-        toast.success(
+      // If the error was caused because the user didn't have the site focused, we save it as a notification.
+      if (error instanceof DOMException && error.code === 0) {
+        setNotifications([
+          {
+            id: nanoid(),
+            from: {
+              name: from.name,
+              type: from.type
+            },
+            text,
+            timestamp: new Date().toISOString()
+          },
+          ...notifications
+        ]);
+      } else {
+        toast.error(
           <span className="text-sm">
-            Check your clipboard, {from.name} just shared their clipboard{" "}
-            {isImageNotification ? "image" : "text"} with you!
+            {from} tried to share their clipboard but something went wrong
           </span>,
           {
             style: {
@@ -85,57 +105,48 @@ function DeviceSubscriptions({
             duration: 4000
           }
         );
-      } catch (error) {
-        console.error(error);
-
-        // If the error was caused because the user didn't have the site focused, we save it as a notification.
-        if (error instanceof DOMException && error.code === 0) {
-          setNotifications([
-            {
-              id: nanoid(),
-              from: {
-                name: from.name,
-                type: from.type
-              },
-              text,
-              timestamp: new Date().toISOString()
-            },
-            ...notifications
-          ]);
-        }
       }
-    };
+    }
+  };
 
-    myDevice.selfChannel.bind("copy-to-clipboard", onCopyToClipboard);
-    myDevice.networkChannel.bind(
-      "pusher:subscription_succeeded",
-      onJoinNetwork
+  const onSomeoneJoinedNetwork = (member: MemberData | undefined) => {
+    if (!member) return;
+
+    setDevices(currentDevices => [
+      ...currentDevices,
+      { name: member.id, type: member.info.type }
+    ]);
+  };
+
+  const onSomeoneLeftNetwork = (member: MemberData | undefined) => {
+    if (!member) return;
+
+    setDevices(currentDevices =>
+      currentDevices.filter(device => device.name !== member.id)
     );
-    myDevice.networkChannel.bind("pusher:member_added", onSomeoneJoined);
-    myDevice.networkChannel.bind("pusher:member_removed", onSomeoneLeft);
+  };
 
-    return () => {
-      if (!myDevice.selfChannel || !myDevice.networkChannel) {
-        return;
-      }
+  // My channel events
+  useEvent<ClipboardData>(myChannel, "copy-to-clipboard", onCopyToClipboard);
 
-      myDevice.selfChannel.unbind("copy-to-clipboard", onCopyToClipboard);
-      myDevice.networkChannel.unbind(
-        "pusher:subscription_succeeded",
-        onJoinNetwork
-      );
-      myDevice.networkChannel.unbind("pusher:member_added", onSomeoneJoined);
-      myDevice.networkChannel.unbind("pusher:member_removed", onSomeoneLeft);
-    };
-  }, [
-    copyToClipboard,
-    myDevice?.info?.name,
-    myDevice.networkChannel,
-    myDevice.selfChannel,
-    notifications,
-    setDevices,
-    setNotifications
-  ]);
+  // Network channel events
+  useEvent<PresenceChannelState>(
+    networkChannel,
+    "pusher:subscription_succeeded",
+    onSubscribeToNetworkChannel
+  );
+
+  useEvent<MemberData>(
+    networkChannel,
+    "pusher:member_added",
+    onSomeoneJoinedNetwork
+  );
+
+  useEvent<MemberData>(
+    networkChannel,
+    "pusher:member_removed",
+    onSomeoneLeftNetwork
+  );
 
   return null;
 }

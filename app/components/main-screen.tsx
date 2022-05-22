@@ -1,48 +1,39 @@
-import type { useDevice } from "~/hooks/use-device";
 import type { Device } from "~/types";
-import { Connecting } from "./connecting";
 import { DevicesList } from "./devices-list";
-import { Header } from "./header";
 import { InfoFooter } from "./info-footer";
 
-type Props = {
-  myDevice: ReturnType<typeof useDevice>;
+interface MainScreenProps {
   ip: string;
-  devicesHalves: {
-    first: Device[];
-    second: Device[];
+  deviceInfo: Device;
+  devices: Device[];
+}
+
+const getDeviceHalves = (devices: Device[]) => {
+  const half = Math.ceil(devices.length / 2);
+  return {
+    first: devices.slice(0, half),
+    second: devices.slice(half)
   };
 };
 
-export function MainScreen({ myDevice, devicesHalves, ip }: Props) {
+export function MainScreen({ devices, ip, deviceInfo }: MainScreenProps) {
+  const devicesHalves = getDeviceHalves(devices);
+
   return (
-    <div className="flex flex-col h-full bg-gray-900 relative items-center justify-center">
-      <div className="p-4 lg:py-6 lg:px-12 ml-auto">
-        <Header />
-      </div>
+    <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
+      <DevicesList
+        devicesHalves={devicesHalves}
+        ip={ip}
+        myDevice={deviceInfo}
+      />
 
-      <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
-        {myDevice.isConnecting ? (
-          <Connecting />
-        ) : myDevice.isConnected && !!myDevice.info ? (
-          <>
-            <DevicesList
-              devicesHalves={devicesHalves}
-              ip={ip}
-              myDevice={myDevice.info}
-            />
+      {devicesHalves.first.length === 0 && devicesHalves.second.length === 0 ? (
+        <p className="text-gray-200 text-center mt-12">
+          Open OneClip on other devices to start sharing
+        </p>
+      ) : null}
 
-            {devicesHalves.first.length === 0 &&
-            devicesHalves.second.length === 0 ? (
-              <p className="text-gray-200 text-center mt-12">
-                Open OneClip on other devices to start sharing
-              </p>
-            ) : null}
-
-            <InfoFooter myDevice={myDevice.info} />
-          </>
-        ) : null}
-      </div>
+      <InfoFooter myDevice={deviceInfo} />
     </div>
   );
 }

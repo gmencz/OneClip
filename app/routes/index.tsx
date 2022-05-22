@@ -5,13 +5,15 @@ import { MainScreen } from "../components/main-screen";
 import { ErrorScreen } from "../components/error-screen";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useActionData, useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { getClientIPAddress } from "remix-utils";
 import { ClipboardToasts } from "~/components/clipboard-toasts";
 import { DeviceSubscriptions } from "~/components/device-subscriptions";
 import type { Device } from "~/types";
-import { useDevice } from "~/hooks/use-device";
-import { useNotifications } from "~/hooks/use-notifications";
+import { useDeviceInfo } from "~/hooks/use-device-info";
+import { Connecting } from "~/components/connecting";
+import { isFirefox, isIE } from "react-device-detect";
+import { useIsPusherReady } from "~/hooks/use-is-pusher-ready";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -33,6 +35,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const response = await rest.get({
     path: `/channels/presence-${base64IP}/users`
   });
+
   if (!response.ok) {
     return json(
       { error: "Internal Server Error" },
@@ -119,35 +122,21 @@ interface LoaderData {
   ip?: string;
   clipboardError?: string;
   error?: string;
-
   allDevices?: string[];
 }
 
-interface ActionData {
+export interface ActionData {
   clipboardError?: string;
   lastDeviceName?: string;
 }
 
 export default function Index() {
-  const { ip, error, allDevices } = useLoaderData<LoaderData>();
-  const actionData = useActionData<ActionData>();
-  const [devices, setDevices] = useState<Device[]>([]);
-  const { notifications, setNotifications } = useNotifications();
-  const myDevice = useDevice({
-    ip,
-    allDevices: allDevices ?? [],
-    shouldConnect: !!ip
-  });
+  const { error, ip, allDevices } = useLoaderData<LoaderData>();
+  const deviceInfo = useDeviceInfo({ allDevices: allDevices || [] });
+  const isPusherReady = useIsPusherReady({ deviceInfo });
+  const isEverythingReady = !!deviceInfo && isPusherReady;
 
-  function getDeviceHalves() {
-    const half = Math.ceil(devices.length / 2);
-    return {
-      first: devices.slice(0, half),
-      second: devices.slice(half)
-    };
-  }
-
-  if (myDevice.isFirefox) {
+  if (isFirefox) {
     return (
       <ErrorScreen>
         <p className="text-red-500 text-lg mt-auto">
@@ -157,7 +146,7 @@ export default function Index() {
     );
   }
 
-  if (myDevice.isIE) {
+  if (isIE) {
     return (
       <ErrorScreen>
         <p className="text-red-500 text-lg mt-auto">
@@ -178,35 +167,40 @@ export default function Index() {
     );
   }
 
-  if (myDevice.isError) {
+  if (!isEverythingReady) {
     return (
-      <ErrorScreen>
-        <p className="text-red-500 text-lg mt-auto">
-          Failed to connect, reason: {myDevice.error || "unknown"}
-        </p>
-      </ErrorScreen>
+      <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
+        <Connecting />
+      </div>
     );
   }
 
   return (
-    <>
-      <MainScreen
-        ip={ip}
-        devicesHalves={getDeviceHalves()}
-        myDevice={myDevice}
-      />
+    <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
+      <View deviceInfo={deviceInfo} ip={ip} />
+    </div>
+  );
+}
 
-      <ClipboardToasts
-        clipboardError={actionData?.clipboardError}
-        lastDeviceName={actionData?.lastDeviceName}
-      />
+interface ViewProps {
+  deviceInfo: Device;
+  ip: string;
+}
+
+function View({ deviceInfo, ip }: ViewProps) {
+  const [devices, setDevices] = useState<Device[]>([]);
+
+  return (
+    <>
+      <MainScreen devices={devices} deviceInfo={deviceInfo} ip={ip} />
 
       <DeviceSubscriptions
-        myDevice={myDevice}
-        notifications={notifications}
         setDevices={setDevices}
-        setNotifications={setNotifications}
+        deviceInfo={deviceInfo}
+        ip={ip}
       />
+
+      <ClipboardToasts />
     </>
   );
 }

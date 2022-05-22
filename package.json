@@ -14,6 +14,7 @@
     "start": "remix-serve build"
   },
   "dependencies": {
+    "@harelpls/use-pusher": "^7.2.1",
     "@headlessui/react": "^1.6.2",
     "@heroicons/react": "^1.0.6",
     "@remix-run/node": "^1.5.1",
@@ -29,8 +30,7 @@
     "react-dom": "^17.0.2",
     "react-hot-toast": "^2.2.0",
     "remix-utils": "^3.2.0",
-    "unique-names-generator": "^4.7.1",
-    "use-local-storage-state": "^17.0.1"
+    "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.5.1",

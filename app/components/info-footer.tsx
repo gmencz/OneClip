@@ -1,12 +1,12 @@
 import { useTransition } from "@remix-run/react";
 import type { Device } from "~/types";
 
-type Props = {
+interface InfoFooterProps {
   myDevice: Device;
-};
+}
 
-export function InfoFooter({ myDevice }: Props) {
-  let transition = useTransition();
+function InfoFooter({ myDevice }: InfoFooterProps) {
+  const transition = useTransition();
 
   return (
     <div className="mt-auto flex flex-col items-center text-center">
@@ -24,3 +24,5 @@ export function InfoFooter({ myDevice }: Props) {
     </div>
   );
 }
+
+export { InfoFooter };

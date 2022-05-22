@@ -4,13 +4,17 @@ import { IMG_PREFIX, TEXT_PREFIX } from "~/constants";
 import { useDeviceIcon } from "~/hooks/use-device-icon";
 import type { Device } from "~/types";
 
-interface Props {
+interface DiscoveredDeviceProps {
   device: Device;
   channel: string;
   myDevice: Device;
 }
 
-function DiscoveredDevice({ device, channel, myDevice }: Props) {
+function DiscoveredDevice({
+  device,
+  channel,
+  myDevice
+}: DiscoveredDeviceProps) {
   const icon = useDeviceIcon(device.type);
   const submit = useSubmit();
 

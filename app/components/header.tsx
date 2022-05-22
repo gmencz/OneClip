@@ -4,35 +4,29 @@ import {
   InformationCircleIcon,
   XIcon
 } from "@heroicons/react/solid";
-import { useMemo } from "react";
 import { Fragment, useState } from "react";
 import { useNotifications } from "~/hooks/use-notifications";
 import { NotificationItem } from "./notification-item";
 
 export function Header() {
-  let [showInfo, setShowInfo] = useState(false);
-  let [showNotifications, setShowNotifications] = useState(false);
-  let { notifications } = useNotifications();
-  let sortedNotifications = useMemo(
-    () =>
-      [...notifications].sort(
-        (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      ),
-    [notifications]
+  const [showInfo, setShowInfo] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { notifications } = useNotifications();
+  const sortedNotifications = [...notifications].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  let dismissInfo = () => {
+  const dismissInfo = () => {
     setShowInfo(false);
   };
 
-  let dismissNotifications = () => {
+  const dismissNotifications = () => {
     setShowNotifications(false);
   };
 
   return (
     <>
-      <div className="flex items-center space-x-6">
+      <div className="flex items-center space-x-6 ml-auto p-4 lg:py-6 lg:px-12 justify-end">
         <button
           onClick={() => setShowNotifications(true)}
           title="Notifications"

@@ -11,7 +11,7 @@ interface NotificationItemProps {
   notification: Notification;
 }
 
-function formatNotificationTimestamp(timestamp: string) {
+const formatNotificationTimestamp = (timestamp: string) => {
   const date = parseISO(timestamp);
 
   if (isToday(date)) {
@@ -21,7 +21,7 @@ function formatNotificationTimestamp(timestamp: string) {
   } else {
     return format(date, "dd/MM/yyyy' at 'h:mm' 'aa");
   }
-}
+};
 
 function NotificationItem({ notification }: NotificationItemProps) {
   const icon = useDeviceIcon(notification.from.type, "sm");

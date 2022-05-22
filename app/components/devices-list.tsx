@@ -3,7 +3,7 @@ import { snakeCase } from "../utils/strings";
 import { DiscoveredDevice } from "./discovered-device";
 import { MyDevice } from "./my-device";
 
-interface Props {
+interface DevicesListProps {
   myDevice: Device;
   ip: string;
   devicesHalves: {
@@ -12,7 +12,7 @@ interface Props {
   };
 }
 
-export function DevicesList({ devicesHalves, myDevice, ip }: Props) {
+export function DevicesList({ devicesHalves, myDevice, ip }: DevicesListProps) {
   return (
     <div className="flex mt-auto gap-14 items-center justify-center flex-wrap">
       {devicesHalves.first.map(device => (

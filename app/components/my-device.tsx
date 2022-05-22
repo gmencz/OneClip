@@ -1,11 +1,11 @@
 import { useDeviceIcon } from "~/hooks/use-device-icon";
 
-type Props = {
+interface MyDeviceProps {
   type: string;
-};
+}
 
-export function MyDevice({ type }: Props) {
-  let icon = useDeviceIcon(type);
+export function MyDevice({ type }: MyDeviceProps) {
+  const icon = useDeviceIcon(type);
 
   return (
     <div className="w-[5.35rem] h-[5.35rem] rounded-full bg-brand flex items-center justify-center text-white relative">

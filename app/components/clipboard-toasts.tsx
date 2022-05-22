@@ -1,25 +1,14 @@
-import { useTransition } from "@remix-run/react";
+import { useActionData } from "@remix-run/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import type { ActionData } from "~/routes/index";
 
-interface ClipboardToastsProps {
-  clipboardError?: string;
-  lastDeviceName?: string;
-}
-
-function ClipboardToasts({
-  clipboardError,
-  lastDeviceName
-}: ClipboardToastsProps) {
-  const transition = useTransition();
+function ClipboardToasts() {
+  const actionData = useActionData<ActionData>();
 
   useEffect(() => {
-    if (transition.submission) {
-      return;
-    }
-
-    if (clipboardError) {
-      console.error(clipboardError);
+    if (actionData?.clipboardError) {
+      console.error(actionData?.clipboardError);
       toast.error(<span className="text-sm">Failed to share clipboard</span>, {
         style: {
           paddingLeft: "15px",
@@ -30,9 +19,11 @@ function ClipboardToasts({
       return;
     }
 
-    if (lastDeviceName) {
+    if (actionData?.lastDeviceName) {
       toast.success(
-        <span className="text-sm">Clipboard shared with {lastDeviceName}</span>,
+        <span className="text-sm">
+          Clipboard shared with {actionData.lastDeviceName}
+        </span>,
         {
           style: {
             paddingLeft: "15px",
@@ -42,7 +33,7 @@ function ClipboardToasts({
         }
       );
     }
-  }, [clipboardError, lastDeviceName, transition.submission]);
+  }, [actionData?.clipboardError, actionData?.lastDeviceName]);
 
   return null;
 }

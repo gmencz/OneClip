@@ -1,3 +1,4 @@
+import { PusherProvider } from "@harelpls/use-pusher";
 import type {
   LinksFunction,
   LoaderFunction,
@@ -14,6 +15,7 @@ import {
   useLoaderData
 } from "@remix-run/react";
 import { Toaster } from "react-hot-toast";
+import { Header } from "./components/header";
 import { NotificationsProvider } from "./components/notifications-provider";
 import styles from "./tailwind.css";
 
@@ -114,14 +116,32 @@ function Environment() {
   );
 }
 
+function App() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return (
+    <NotificationsProvider>
+      <PusherProvider
+        clientKey={window.ENV.PUBLIC_PUSHER_KEY}
+        cluster={window.ENV.PUBLIC_PUSHER_CLUSTER}
+        authEndpoint="/api/pusher/auth"
+      >
+        <div className="h-full bg-gray-900 relative flex flex-col">
+          <Header />
+          <Outlet />
+          <Toaster />
+        </div>
+      </PusherProvider>
+    </NotificationsProvider>
+  );
+}
+
 function Body() {
   return (
     <body>
-      <NotificationsProvider>
-        <Outlet />
-        <Toaster />
-      </NotificationsProvider>
-
+      <App />
       <Environment />
       <ScrollRestoration />
       <Scripts />

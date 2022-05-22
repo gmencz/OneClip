@@ -3,11 +3,11 @@ import { useState } from "react";
 import { NotificationsContext } from "~/hooks/use-notifications";
 import type { Notification } from "~/types";
 
-interface Props {
+interface NotificationsProviderProps {
   children: ReactNode;
 }
 
-function NotificationsProvider({ children }: Props) {
+function NotificationsProvider({ children }: NotificationsProviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   return (
