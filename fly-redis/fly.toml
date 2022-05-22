@@ -1,0 +1,47 @@
+# fly.toml file generated for oneclip-redis on 2022-05-22T12:24:44+02:00
+
+app = "oneclip-redis"
+
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[build]
+  image = "flyio/redis:6.2.6"
+
+[env]
+
+[mounts]
+  destination = "/data"
+  source = "redis_server"
+
+[experimental]
+  allowed_public_ports = []
+  auto_rollback = true
+
+[[services]]
+  # http_checks = []
+  # internal_port = 8080
+  # processes = ["app"]
+  # protocol = "tcp"
+  # script_checks = []
+
+  # [services.concurrency]
+  #   hard_limit = 25
+  #   soft_limit = 20
+  #   type = "connections"
+
+  # [[services.ports]]
+  #   force_https = true
+  #   handlers = ["http"]
+  #   port = 80
+
+  # [[services.ports]]
+  #   handlers = ["tls", "http"]
+  #   port = 443
+
+  # [[services.tcp_checks]]
+  #   grace_period = "1s"
+  #   interval = "15s"
+  #   restart_limit = 0
+  #   timeout = "2s"
