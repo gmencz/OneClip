@@ -34,7 +34,7 @@ export function Header() {
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-7 h-7 text-gray-200 hover:text-white"
+            className="w-7 h-7 text-gray-200 hover:text-gray-100"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -52,7 +52,7 @@ export function Header() {
         <a href="https://github.com/gmencz/OneClip" title="GitHub">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6 text-gray-200 hover:text-white"
+            className="w-6 h-6 text-gray-200 hover:text-gray-100"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
@@ -63,7 +63,7 @@ export function Header() {
 
         <button title="Info" onClick={() => setShowInfo(true)}>
           <InformationCircleIcon
-            className="h-7 w-7 text-gray-200 hover:text-white"
+            className="h-7 w-7 text-gray-200 hover:text-gray-100"
             aria-hidden="true"
           />
           <span className="sr-only">Info</span>
@@ -111,7 +111,7 @@ export function Header() {
                   >
                     <div className="absolute top-0 left-0 -ml-8 pt-4 pr-2 flex sm:-ml-10 sm:pr-4">
                       <button
-                        className="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+                        className="rounded-md text-gray-300 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-white"
                         onClick={dismissNotifications}
                       >
                         <span className="sr-only">Close panel</span>
@@ -193,7 +193,7 @@ export function Header() {
                   >
                     <div className="absolute top-0 left-0 -ml-8 pt-4 pr-2 flex sm:-ml-10 sm:pr-4">
                       <button
-                        className="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+                        className="rounded-md text-gray-300 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-white"
                         onClick={dismissInfo}
                       >
                         <span className="sr-only">Close panel</span>

@@ -63,7 +63,7 @@ function DiscoveredDevice({
   return (
     <button
       onClick={shareClipboard}
-      className="w-[5.35rem] h-[5.35rem] rounded-full bg-brand flex items-center justify-center text-white relative hover:bg-opacity-80 focus:outline-none focus:ring focus:ring-white"
+      className="w-[5.35rem] h-[5.35rem] rounded-full bg-brand flex items-center justify-center text-gray-100 relative hover:bg-opacity-80 focus:outline-none focus:ring focus:ring-white"
     >
       {icon}
       <span className="bg-white text-gray-800 text-sm absolute top-[88%] whitespace-nowrap rounded-full py-1 px-2 font-bold">

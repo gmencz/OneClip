@@ -9,7 +9,7 @@ function PremiumAnnouncement() {
           <div className="w-0 flex-1 flex items-center">
             <span className="flex p-2 rounded-lg bg-gray-900">
               <SpeakerphoneIcon
-                className="h-6 w-6 text-white"
+                className="h-6 w-6 text-gray-100"
                 aria-hidden="true"
               />
             </span>
@@ -23,7 +23,7 @@ function PremiumAnnouncement() {
           <div className="order-3 mt-2 flex-shrink-0 w-full sm:order-2 sm:mt-0 sm:w-auto">
             <Link
               to="/premium"
-              className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-white hover:text-gray-900"
+              className="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-100 bg-gray-900 hover:bg-white hover:text-gray-900"
             >
               Learn more
             </Link>
