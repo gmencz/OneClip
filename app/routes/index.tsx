@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { rest } from "../utils/pusher.server";
 import { commitSession, getSession } from "../utils/sessions";
 import { MainScreen } from "../components/main-screen";
@@ -13,8 +13,10 @@ import type { Device } from "~/types";
 import { useDeviceInfo } from "~/hooks/use-device-info";
 import { Connecting } from "~/components/connecting";
 import { isFirefox, isIE } from "react-device-detect";
-import { useIsPusherReady } from "~/hooks/use-is-pusher-ready";
 import { PremiumAnnouncement } from "~/components/premium-announcement";
+import { NotificationsProvider } from "~/components/notifications-provider";
+import { PusherProvider, usePusher } from "@harelpls/use-pusher";
+import { Header } from "~/components/header";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -134,8 +136,7 @@ export interface ActionData {
 export default function Index() {
   const { error, ip, allDevices } = useLoaderData<LoaderData>();
   const deviceInfo = useDeviceInfo({ allDevices: allDevices || [] });
-  const isPusherReady = useIsPusherReady({ deviceInfo });
-  const isEverythingReady = !!deviceInfo && isPusherReady;
+  const isEverythingReady = !!deviceInfo;
 
   if (isFirefox) {
     return (
@@ -177,9 +178,25 @@ export default function Index() {
   }
 
   return (
-    <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
-      <View deviceInfo={deviceInfo} ip={ip} />
-    </div>
+    <NotificationsProvider>
+      <PusherProvider
+        clientKey={window.ENV.PUBLIC_PUSHER_KEY}
+        cluster={window.ENV.PUBLIC_PUSHER_CLUSTER}
+        authEndpoint="/api/pusher/auth"
+        auth={{
+          params: { device: JSON.stringify(deviceInfo) }
+        }}
+      >
+        <div className="h-full bg-gray-900 relative flex flex-col">
+          <PremiumAnnouncement />
+          <Header />
+
+          <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
+            <View deviceInfo={deviceInfo} ip={ip} />
+          </div>
+        </div>
+      </PusherProvider>
+    </NotificationsProvider>
   );
 }
 
@@ -190,6 +207,14 @@ interface ViewProps {
 
 function View({ deviceInfo, ip }: ViewProps) {
   const [devices, setDevices] = useState<Device[]>([]);
+  const pusher = usePusher();
+
+  // Disconnect from pusher when we leave this route.
+  useEffect(() => {
+    return () => {
+      pusher.client?.disconnect();
+    };
+  }, [pusher.client]);
 
   return (
     <>

@@ -122,23 +122,7 @@ function App() {
     return null;
   }
 
-  return (
-    <NotificationsProvider>
-      <PusherProvider
-        clientKey={window.ENV.PUBLIC_PUSHER_KEY}
-        cluster={window.ENV.PUBLIC_PUSHER_CLUSTER}
-        authEndpoint="/api/pusher/auth"
-      >
-        <div className="h-full bg-gray-900 relative flex flex-col">
-          <PremiumAnnouncement />
-          <Header />
-
-          <Outlet />
-          <Toaster />
-        </div>
-      </PusherProvider>
-    </NotificationsProvider>
-  );
+  return <Outlet />;
 }
 
 function Body() {

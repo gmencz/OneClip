@@ -3,7 +3,6 @@ import { useChannel, useEvent } from "@harelpls/use-pusher";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { snakeCase } from "~/utils/strings";
 import type { Device } from "~/types";
-import { IMG_PREFIX } from "~/constants";
 import toast from "react-hot-toast";
 import { useNotifications } from "~/hooks/use-notifications";
 import { nanoid } from "nanoid";
@@ -60,12 +59,10 @@ function DeviceSubscriptions({
 
     try {
       await copyToClipboard(text);
-      const [notificationPrefix] = text.split(":");
-      const isImageNotification = notificationPrefix === IMG_PREFIX;
       toast.success(
         <span className="text-sm">
-          Check your clipboard, {from.name} just shared their clipboard{" "}
-          {isImageNotification ? "image" : "text"} with you!
+          Check your clipboard, {from.name} just shared their clipboard with
+          you!
         </span>,
         {
           style: {

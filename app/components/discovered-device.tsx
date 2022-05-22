@@ -1,6 +1,5 @@
 import { useSubmit } from "@remix-run/react";
 import toast from "react-hot-toast";
-import { IMG_PREFIX, TEXT_PREFIX } from "~/constants";
 import { useDeviceIcon } from "~/hooks/use-device-icon";
 import type { Device } from "~/types";
 
@@ -20,8 +19,8 @@ function DiscoveredDevice({
 
   const shareClipboard = async () => {
     try {
-      const [clipboardItem] = await navigator.clipboard.read();
-      if (!clipboardItem) {
+      const text = await navigator.clipboard.readText();
+      if (!text) {
         toast.error(<span className="text-sm">Your clipboard is empty</span>, {
           style: {
             paddingLeft: "15px",
@@ -37,21 +36,7 @@ function DiscoveredDevice({
       formData.append("channel", channel);
       formData.append("fromName", myDevice.name);
       formData.append("fromType", myDevice.type);
-
-      if (clipboardItem.types.includes("image/png")) {
-        const blob = await clipboardItem.getType("image/png");
-        const body = new FormData();
-        body.append("image", blob);
-        const data = await fetch("/api/images", { method: "POST", body }).then(
-          res => res.json()
-        );
-
-        const { imageId } = data;
-        formData.append("text", `${IMG_PREFIX}:${imageId}`);
-      } else {
-        const text = await navigator.clipboard.readText();
-        formData.append("text", `${TEXT_PREFIX}:${text}`);
-      }
+      formData.append("text", text);
 
       submit(formData, {
         method: "post",

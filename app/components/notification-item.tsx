@@ -5,7 +5,6 @@ import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { useDeviceIcon } from "~/hooks/use-device-icon";
 import { useNotifications } from "~/hooks/use-notifications";
 import type { Notification } from "~/types";
-import { IMG_PREFIX } from "~/constants";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -64,9 +63,6 @@ function NotificationItem({ notification }: NotificationItemProps) {
     setNotifications(notifications.filter(n => n.id !== notification.id));
   };
 
-  const [notificationPrefix] = notification.text.split(":");
-  const isImageNotification = notificationPrefix === IMG_PREFIX;
-
   return (
     <li className="py-4">
       <div className="flex items-center space-x-4">
@@ -77,7 +73,7 @@ function NotificationItem({ notification }: NotificationItemProps) {
             {formatNotificationTimestamp(notification.timestamp)}
           </p>
           <p className="text-sm text-gray-300 truncate">
-            Shared their clipboard {isImageNotification ? "image" : "text"}
+            Shared their clipboard
           </p>
         </div>
         <div className="flex items-center space-x-2.5">
