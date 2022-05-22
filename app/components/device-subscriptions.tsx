@@ -4,6 +4,7 @@ import type { Device, Notification } from "~/types";
 import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 import { nanoid } from "nanoid";
 import toast from "react-hot-toast";
+import { IMG_PREFIX } from "~/constants";
 
 interface DeviceSubscriptionsProps {
   myDevice: ReturnType<typeof useDevice>;
@@ -68,10 +69,13 @@ function DeviceSubscriptions({
     const onCopyToClipboard = async ({ from, text }: ClipboardData) => {
       try {
         await copyToClipboard(text);
+        const [notificationPrefix] = text.split(":");
+        const isImageNotification = notificationPrefix === IMG_PREFIX;
+
         toast.success(
           <span className="text-sm">
-            Check your clipboard, {from.name} just shared their clipboard with
-            you!
+            Check your clipboard, {from.name} just shared their clipboard{" "}
+            {isImageNotification ? "image" : "text"} with you!
           </span>,
           {
             style: {
