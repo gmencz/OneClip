@@ -131,10 +131,8 @@ interface ActionData {
 export default function Index() {
   const { ip, error, allDevices } = useLoaderData<LoaderData>();
   const actionData = useActionData<ActionData>();
-
   const [devices, setDevices] = useState<Device[]>([]);
   const { notifications, setNotifications } = useNotifications();
-
   const myDevice = useDevice({
     ip,
     allDevices: allDevices ?? [],
