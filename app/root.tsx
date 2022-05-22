@@ -62,7 +62,8 @@ export const meta: MetaFunction = () => {
     description:
       "Share your clipboard with people nearby. Open Source, No Setup, No Signup.",
     title: "OneClip",
-    keywords: "Clipboard, Share"
+    keywords: "Clipboard, Share",
+    viewport: "width=device-width,initial-scale=1"
   };
 };
 
