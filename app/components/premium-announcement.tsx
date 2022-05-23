@@ -16,7 +16,8 @@ function PremiumAnnouncement() {
             <p className="ml-3 text-gray-900 truncate font-bold">
               <span className="md:hidden">New features!</span>
               <span className="hidden md:inline">
-                Big news! You can now upgrade to Premium and enjoy new features.
+                Big news! Upgrade to Premium free for one month and enjoy new
+                features.
               </span>
             </p>
           </div>

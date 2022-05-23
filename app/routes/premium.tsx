@@ -1,10 +1,15 @@
-import { CheckCircleIcon, CheckIcon } from "@heroicons/react/solid";
+import { CheckIcon } from "@heroicons/react/solid";
+import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 
-const features = [
-  "File sharing.",
-  "Your own networks to share with anyone anywhere."
-];
+const features = ["File sharing.", "Your own networks.", "Unlimited devices."];
+
+export const meta: MetaFunction = () => ({
+  title: "OneClip Premium",
+  "og:title": "OneClip Premium",
+  "og:url": "https://oneclip.io/premium",
+  keywords: "Clipboard, Share, Premium"
+});
 
 export default function Pricing() {
   return (
@@ -27,12 +32,12 @@ export default function Pricing() {
                 After that, $9.99 per month. Cancel anytime.
               </p>
             </div>
-            <a
-              href="/"
-              className="mt-8 w-full bg-brand border border-transparent px-5 py-3 inline-flex items-center justify-center text-base rounded-md text-gray-900 font-bold hover:bg-indigo-700 sm:mt-10 sm:w-auto xl:mt-0"
+            <Link
+              to="/auth/sign-in"
+              className="mt-8 w-full bg-brand border border-transparent px-5 py-3 inline-flex items-center justify-center text-base rounded-md text-gray-900 font-bold hover:bg-gray-100 sm:mt-10 sm:w-auto xl:mt-0"
             >
               Get started today
-            </a>
+            </Link>
           </div>
           <div className="border-t border-gray-700 pt-12">
             <h2 className="text-base font-semibold text-brand tracking-wide uppercase">
