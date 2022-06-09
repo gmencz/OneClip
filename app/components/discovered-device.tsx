@@ -40,7 +40,6 @@ function DiscoveredDevice({
 
       submit(formData, {
         method: "post",
-        action: "/?index",
         encType: "application/x-www-form-urlencoded"
       });
     } catch (error) {

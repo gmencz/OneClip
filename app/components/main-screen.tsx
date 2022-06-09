@@ -26,7 +26,7 @@ export function MainScreen({
   const location = useLocation();
 
   return (
-    <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
+    <>
       <DevicesList
         devicesHalves={devicesHalves}
         networkID={networkID}
@@ -47,6 +47,6 @@ export function MainScreen({
       ) : null}
 
       <InfoFooter myDevice={deviceInfo} />
-    </div>
+    </>
   );
 }

@@ -1,9 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  ExclamationIcon,
-  InformationCircleIcon,
-  XIcon
-} from "@heroicons/react/solid";
+import { InformationCircleIcon, XIcon } from "@heroicons/react/solid";
 import { Fragment, useState } from "react";
 import { useNotifications } from "~/hooks/use-notifications";
 import { NetworkLink } from "./network-link";
@@ -27,7 +23,7 @@ export function Header() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center p-4 lg:py-6 lg:px-12">
+      <div className="flex flex-col items-center justify-center px-4 pt-12">
         <div className="flex items-center space-x-6">
           <button
             onClick={() => setShowNotifications(true)}
@@ -72,7 +68,7 @@ export function Header() {
           </button>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-6">
           <NetworkLink />
         </div>
       </div>
@@ -216,24 +212,17 @@ export function Header() {
                     </div>
                     <div className="mt-6 relative flex-1 px-4 sm:px-6 text-gray-300">
                       <p>
-                        OneClip allows you to share your clipboard with nearby
+                        OneClip allows you to share your clipboard with other
                         devices.
                       </p>
 
                       <p className="mt-4">
-                        All you need to do is open OneClip on your nearby
-                        devices and they will be discovered. To share your
+                        All you need to do is open OneClip on your device and
+                        share the network link which can be found at the top of
+                        the app, other devices can then open this link and you
+                        will be able to see them on the app. To share your
                         clipboard with one of the devices, click/tap on the
                         device to which you want to share your clipboard with.
-                        If the other device has OneClip open and focused, your
-                        clipboard will be pasted into theirs, else, the other
-                        device will be notified that you shared your clipboard
-                        with them.
-                      </p>
-
-                      <p className="mt-4">
-                        When we talk about nearby devices, we're referring to
-                        devices in the same network.
                       </p>
 
                       <div className="mt-4 rounded-md bg-gray-800 p-4">
@@ -246,27 +235,8 @@ export function Header() {
                           </div>
                           <div className="ml-3 flex-1 md:flex md:justify-between">
                             <p className="text-sm text-green-500">
-                              The maximum allowed amount of connected devices
-                              per network is 100.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-md bg-gray-800 p-4">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <ExclamationIcon
-                              className="h-5 w-5 text-yellow-400"
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <div className="ml-3 flex-1 md:flex md:justify-between">
-                            <p className="text-sm text-yellow-500">
-                              We don't recommend using OneClip on public
-                              networks since anyone can connect to that network
-                              and share their clipboard with you. If you do use
-                              it, do so at your own risk.
+                              The maximum amount of connected devices per
+                              network is 100 for now.
                             </p>
                           </div>
                         </div>
