@@ -1,7 +1,7 @@
 import { useActionData } from "@remix-run/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
-import type { ActionData } from "~/routes/index";
+import type { ActionData } from "~/routes/$network";
 
 function ClipboardToasts() {
   const actionData = useActionData<ActionData>();

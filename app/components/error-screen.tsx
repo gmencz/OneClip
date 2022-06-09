@@ -6,7 +6,7 @@ interface ErrorScreenProps {
 
 export function ErrorScreen({ children }: ErrorScreenProps) {
   return (
-    <div className="flex flex-1 items-center justify-center text-center">
+    <div className="h-full flex flex-1 items-center justify-center text-center">
       {children}
     </div>
   );

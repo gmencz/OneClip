@@ -1,4 +1,3 @@
-import { PusherProvider } from "@harelpls/use-pusher";
 import type {
   LinksFunction,
   LoaderFunction,
@@ -14,10 +13,6 @@ import {
   ScrollRestoration,
   useLoaderData
 } from "@remix-run/react";
-import { Toaster } from "react-hot-toast";
-import { Header } from "./components/header";
-import { NotificationsProvider } from "./components/notifications-provider";
-import { PremiumAnnouncement } from "./components/premium-announcement";
 import styles from "./tailwind.css";
 
 const getEnv = () => {

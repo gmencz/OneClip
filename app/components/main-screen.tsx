@@ -1,9 +1,10 @@
+import { useLocation } from "@remix-run/react";
 import type { Device } from "~/types";
 import { DevicesList } from "./devices-list";
 import { InfoFooter } from "./info-footer";
 
 interface MainScreenProps {
-  ip: string;
+  networkID: string;
   deviceInfo: Device;
   devices: Device[];
 }
@@ -16,20 +17,32 @@ const getDeviceHalves = (devices: Device[]) => {
   };
 };
 
-export function MainScreen({ devices, ip, deviceInfo }: MainScreenProps) {
+export function MainScreen({
+  devices,
+  networkID,
+  deviceInfo
+}: MainScreenProps) {
   const devicesHalves = getDeviceHalves(devices);
+  const location = useLocation();
 
   return (
     <div className="p-12 flex flex-1 flex-col items-center justify-center relative">
       <DevicesList
         devicesHalves={devicesHalves}
-        ip={ip}
+        networkID={networkID}
         myDevice={deviceInfo}
       />
 
       {devicesHalves.first.length === 0 && devicesHalves.second.length === 0 ? (
         <p className="text-gray-200 text-center mt-12">
-          Open OneClip on other devices to start sharing
+          Open{" "}
+          <a
+            className="text-brand font-semibold hover:text-opacity-75"
+            href={location.pathname}
+          >
+            this link
+          </a>{" "}
+          on other devices to start sharing
         </p>
       ) : null}
 

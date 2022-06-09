@@ -1,8 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { getClientIPAddress } from "remix-utils";
+import { getDeviceChannelName, getNetworkChannelName } from "~/utils/channels";
 import { rest } from "~/utils/pusher.server";
-import { snakeCase } from "~/utils/strings";
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== "POST") {
@@ -11,39 +10,29 @@ export const action: ActionFunction = async ({ request }) => {
 
   const payload = await request.formData();
   const rawDevice = payload.get("device");
-  const socketId = payload.get("socket_id");
+  const socketID = payload.get("socket_id");
   const channelName = payload.get("channel_name");
+  const networkID = payload.get("network_id");
+
   if (
     typeof rawDevice !== "string" ||
     typeof channelName !== "string" ||
-    typeof socketId !== "string"
+    typeof socketID !== "string" ||
+    typeof networkID !== "string"
   ) {
     return json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const ipAddress =
-    process.env.NODE_ENV === "production"
-      ? getClientIPAddress(request.headers)
-      : "127.0.0.1";
-
-  if (!ipAddress) {
-    return json(
-      { error: "Failed to retrieve public IP address" },
-      { status: 500 }
-    );
-  }
-
-  const base64IP = Buffer.from(ipAddress).toString("base64");
   const device = JSON.parse(rawDevice);
   if (!device) {
     return json({ error: "Unknown device" }, { status: 401 });
   }
 
   if (channelName.startsWith("presence")) {
-    if (channelName !== `presence-${base64IP}`) {
+    if (channelName !== getNetworkChannelName(networkID)) {
       return json(
         {
-          error: "You can only subscribe to presence channels in your network"
+          error: "You can't subscribe to this network"
         },
         { status: 401 }
       );
@@ -51,7 +40,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     let auth;
     try {
-      auth = rest.authenticate(socketId, channelName, {
+      auth = rest.authenticate(socketID, channelName, {
         user_id: device.name,
         user_info: {
           type: device.type
@@ -69,16 +58,15 @@ export const action: ActionFunction = async ({ request }) => {
     return json(auth);
   }
 
-  if (channelName !== `private-${snakeCase(device.name)}-${base64IP}`) {
+  if (channelName !== getDeviceChannelName(device.name, networkID)) {
     return json(
       {
-        error:
-          "You can only subscribe to private channels related to your device"
+        error: "You can only subscribe to your own device"
       },
       { status: 401 }
     );
   }
 
-  const auth = rest.authenticate(socketId, channelName);
+  const auth = rest.authenticate(socketID, channelName);
   return json(auth);
 };

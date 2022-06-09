@@ -6,11 +6,12 @@ import type { Device } from "~/types";
 import toast from "react-hot-toast";
 import { useNotifications } from "~/hooks/use-notifications";
 import { nanoid } from "nanoid";
+import { getDeviceChannelName, getNetworkChannelName } from "~/utils/channels";
 
 interface DeviceSubscriptionsProps {
   setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
   deviceInfo: Device;
-  ip: string;
+  networkID: string;
 }
 
 interface MemberData {
@@ -26,12 +27,15 @@ interface ClipboardData {
 function DeviceSubscriptions({
   setDevices,
   deviceInfo,
-  ip
+  networkID
 }: DeviceSubscriptionsProps) {
   const copyToClipboard = useCopyToClipboard();
   const { notifications, setNotifications } = useNotifications();
-  const myChannel = useChannel(`private-${snakeCase(deviceInfo.name)}-${ip}`);
-  const networkChannel = useChannel(`presence-${ip}`);
+  const myChannel = useChannel(
+    getDeviceChannelName(deviceInfo.name, networkID)
+  );
+
+  const networkChannel = useChannel(getNetworkChannelName(networkID));
 
   const onSubscribeToNetworkChannel = (
     data: PresenceChannelState | undefined

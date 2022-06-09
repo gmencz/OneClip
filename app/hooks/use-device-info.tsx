@@ -32,12 +32,6 @@ function useDeviceInfo(params: UseDeviceInfoParams): Device | undefined {
   let [device, setDevice] = useState<Device>();
 
   useEffect(() => {
-    let savedDevice = localStorage.getItem("device");
-    if (savedDevice) {
-      setDevice(JSON.parse(savedDevice));
-      return;
-    }
-
     let name = generateDeviceName();
     // Make sure the name generated is unique among all devices.
     while (params.allDevices.includes(name)) {
@@ -60,7 +54,6 @@ function useDeviceInfo(params: UseDeviceInfoParams): Device | undefined {
     }
 
     setDevice({ name, type });
-    localStorage.setItem("device", JSON.stringify({ name, type }));
   }, [params.allDevices]);
 
   return device;
