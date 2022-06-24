@@ -1,6 +1,6 @@
 import type { ActionFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { getDeviceChannelName, getNetworkChannelName } from "~/utils/channels";
+import { getNetworkChannelName } from "~/utils/channels";
 import { rest } from "~/utils/pusher.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -56,15 +56,6 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     return json(auth);
-  }
-
-  if (channelName !== getDeviceChannelName(device.name, networkID)) {
-    return json(
-      {
-        error: "You can only subscribe to your own device"
-      },
-      { status: 401 }
-    );
   }
 
   const auth = rest.authenticate(socketID, channelName);
